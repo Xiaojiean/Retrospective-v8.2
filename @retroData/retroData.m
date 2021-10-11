@@ -62,7 +62,7 @@ classdef retroData
         no_samples_nav = 10
         primary_navigator_point = 10
         nr_nav_points_discarded = 35
-        nr_nav_points_used = 1
+        nr_nav_points_used = 5
         
         % Final dimensions
         dimx
@@ -415,6 +415,9 @@ classdef retroData
                 end
                 
                 obj.primary_navigator_point = obj.no_samples_nav;
+                if obj.nr_nav_points_used > obj.primary_navigator_point
+                    obj.nr_nav_points_used = obj.primary_navigator_point;
+                end
                 obj.nr_repetitions = size(obj.data{1},1);
                 
             else
