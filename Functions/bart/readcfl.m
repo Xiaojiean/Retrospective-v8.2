@@ -1,12 +1,6 @@
+% READCFL Read complex data from file.
+
 function data = readcfl(filenameBase)
-%READCFL Read complex data from file.
-%   Read in reconstruction data stored in filenameBase.cfl (complex float)
-%   based on dimensions stored in filenameBase.hdr.
-%
-%   Written to edit data with the Berkeley Advanced Reconstruction Toolbox (BART).
-%
-% Copyright 2016. CBClab, Maastricht University.
-% 2016 Tim Loderhose (t.loderhose@student.maastrichtuniversity.nl)
 
     dims = readReconHeader(filenameBase);
 
@@ -19,9 +13,12 @@ function data = readcfl(filenameBase)
     data(:) = complex(data_r_i(1,:),data_r_i(2,:));
 
     fclose(fid);
+
 end
 
+
 function dims = readReconHeader(filenameBase)
+
     filename = strcat(filenameBase,'.hdr');
     fid = fopen(filename);
     
@@ -29,11 +26,16 @@ function dims = readReconHeader(filenameBase)
     dims = str2num(line);
     
     fclose(fid);
+
 end
 
+
 function line = getNextLine(fid)
+
     line = fgetl(fid);
+    
     while(line(1) == '#')
         line = fgetl(fid);
     end
+
 end
