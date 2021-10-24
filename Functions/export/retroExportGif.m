@@ -1,4 +1,4 @@
-function folder_name = export_gif(parameters,gifExportPath,movie,tag,window,level,recoType,acqDur)
+function folder_name = retroExportGif(parameters,gifExportPath,movie,tag,window,level,recoType,acqDur)
 % Exports movie to animated gif
 
 
@@ -97,7 +97,7 @@ else
             for idx = 1:nrFrames
 
                 imaget = uint8(squeeze(movie(idx,:,:,i,j)));
-                image(i,:,:,idx,j) = imresize(imaget,[dimx,dimy]);
+                image(i,:,:,idx,j) = imresize(imaget,[dimx,dimy]); %#ok<AGROW> 
                 imagegif = squeeze(image(i,:,:,idx,j));
 
                 if idx == 1

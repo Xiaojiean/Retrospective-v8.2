@@ -4,12 +4,12 @@ classdef retroReco
     
     properties
         
-        movie_exp                       % movie for movie export
-        movie_app                       % movie for viewing in the app
-        sense_map                       % sense map
+        movieExp                        % movie for movie export
+        movieApp                        % movie for viewing in the app
+        senseMap                        % sense map
         sos = true                      % Sum of squares reco true or false
-        multiSlice_flag = false         % multi-slice true or false
-        multiDynamic_flag = false       % mutli-dynamic true or false
+        multiSliceFlag = false          % multi-slice true or false
+        multiDynamicFlag = false        % mutli-dynamic true or false
         
     end
     
@@ -24,16 +24,16 @@ classdef retroReco
         % ---------------------------------------------------------------------------------
         function obj = retroReco
             
-        end
+        end % retroReco
         
         
         
         % ---------------------------------------------------------------------------------
         % 2D reconstruction
         % ---------------------------------------------------------------------------------
-        function objReco = reco2D(objReco,objData,objKspace,app)
+        function objReco = reco2D(objReco, objData, objKspace, app)
             
-            if app.bartDetected_flag
+            if app.bartDetectedFlag
                 
                 % Perform CS reconstruction with the Bart toolbox, preferred option
                 app.TextMessage('Reconstructing the data with the BART toolbox ...');
@@ -63,8 +63,8 @@ classdef retroReco
             % ---------------------------------------------------------------------------------
             function cs_reco2D_mat_mc
                 
-                kspace_in = objKspace.kspace;
-                averages = objKspace.kspace_avg;
+                kspace_in = objKspace.kSpace;
+                averages = objKspace.kSpaceAvg;
                 lambda_TV = app.TVcineEditField.Value;
                 
                 % kspace = {coil}[CINE, y, x, slice, dynamic]
@@ -185,8 +185,8 @@ classdef retroReco
                 end
                 
                 % shift image in phase-encoding direction if needed
-                objReco.movie_exp = circshift(image_out,objData.pixelshift1,2);
-                objReco.sense_map = ones(size(objReco.movie_exp));
+                objReco.movieExp = circshift(image_out,objData.pixelshift1,2);
+                objReco.senseMap = ones(size(objReco.movieExp));
                 
             end
             
@@ -196,7 +196,7 @@ classdef retroReco
             % ---------------------------------------------------------------------------------
             function cs_reco2D_mc
                 
-                kspace_in = objKspace.kspace;
+                kspace_in = objKspace.kSpace;
                 Wavelet = app.WVxyzEditField.Value;
                 TVxy = app.TVxyzEditField.Value;
                 LR = app.LLRxyzEditField.Value;
@@ -345,8 +345,8 @@ classdef retroReco
                 sensemap = sensemap*4095/max(sensemap(:));
                 
                 % shift image in phase-encoding direction if needed
-                objReco.movie_exp = circshift(image_out,objData.pixelshift1,2);
-                objReco.sense_map = circshift(sensemap,objData.pixelshift1,2);
+                objReco.movieExp = circshift(image_out,objData.pixelshift1,2);
+                objReco.senseMap = circshift(sensemap,objData.pixelshift1,2);
                 
             end
             
@@ -357,9 +357,9 @@ classdef retroReco
         % ---------------------------------------------------------------------------------
         % 3D reconstruction
         % ---------------------------------------------------------------------------------
-        function objReco = reco3D(objReco,objData,objKspace,app)
+        function objReco = reco3D(objReco, objData, objKspace, app)
             
-            if app.bartDetected_flag
+            if app.bartDetectedFlag
                 
                 % perform CS reconstruction with the Bart toolbox, preferred option
                 app.TextMessage('Reconstructing the 3D data with the BART toolbox ...');
@@ -388,8 +388,8 @@ classdef retroReco
             % ---------------------------------------------------------------------------------
             function cs_reco3D_mat_mc
                 
-                kspace_in = objKspace.kspace;
-                averages = objKspace.kspace_avg;
+                kspace_in = objKspace.kSpace;
+                averages = objKspace.kSpaceAvg;
                 lambda_TV = app.TVcineEditField.Value;
                 
                 % kdata_in = {coil}[CINE, y, x, z, dynamic]
@@ -506,9 +506,9 @@ classdef retroReco
                 end
                 
                 % shift image in phase-encoding direction if needed
-                objReco.movie_exp = circshift(image_out,objData.pixelshift1,2);
-                objReco.movie_exp = circshift(image_out,objData.pixelshift2,1);
-                objReco.sense_map = ones(size(objReco.movie_exp));
+                objReco.movieExp = circshift(image_out,objData.pixelshift1,2);
+                objReco.movieExp = circshift(image_out,objData.pixelshift2,1);
+                objReco.senseMap = ones(size(objReco.movieExp));
                 
             end
             
@@ -518,7 +518,7 @@ classdef retroReco
             % ---------------------------------------------------------------------------------
             function cs_reco3D_mc
                 
-                kspace_in = objKspace.kspace;
+                kspace_in = objKspace.kSpace;
                 Wavelet = app.WVxyzEditField.Value;
                 TVxyz = app.TVxyzEditField.Value;
                 LR = app.LLRxyzEditField.Value;
@@ -662,33 +662,33 @@ classdef retroReco
                 sensemap = sensemap*4095/max(sensemap(:));
                 
                 % shift image in phase-encoding direction if needed
-                objReco.movie_exp = circshift(image_out,objData.pixelshift1,2);
-                objReco.movie_exp = circshift(image_out,objData.pixelshift2,1);
-                objReco.sense_map = circshift(sensemap,objData.pixelshift1,2);
+                objReco.movieExp = circshift(image_out,objData.pixelshift1,2);
+                objReco.movieExp = circshift(image_out,objData.pixelshift2,1);
+                objReco.senseMap = circshift(sensemap,objData.pixelshift1,2);
                 
             end
             
-        end
+        end % reco3D
         
                 
         
         % ---------------------------------------------------------------------------------
         % Radial reconstruction with the Bart toolbox
         % ---------------------------------------------------------------------------------
-        function objReco = recoRadial(objReco,objData,objKspace,app)
+        function objReco = recoRadial(objReco, objData, objKspace, app)
             
             app.TextMessage('Reconstructing 2D radial data with the BART toolbox ...');
             app.ProgressGauge.Value = 0;
             drawnow;
             
-            kspace_in = objKspace.kspace;
+            kspace_in = objKspace.kSpace;
             Wavelet = app.WVxyzEditField.Value;
             TVxy = app.TVxyzEditField.Value;
             TVt = app.TVcineEditField.Value;
             nc = objData.nr_coils;
             dimx = objData.dimx;
             dimy = objData.dimy;
-            ksteps = objData.nrKsteps;
+            ksteps = objData.nrKsteps; %#ok<NASGU> 
             
             % app = matlab app
             % kspace_in = sorted k-space
@@ -701,13 +701,13 @@ classdef retroReco
             % radial k-space trajectory for Bart toolbox
             radial = 360;           % 360 degrees
             u_spokes = true;        % unique spokes true/false
-            half_spoke = false;     % half trajectory true/false
+            half_spoke = false;     %#ok<NASGU> % half trajectory true/false
             
             for n = 1:dimy
                 
                 % caluculate angle
                 if radial == 180
-                    a(n) = (n-1)*180/dimy;
+                    a(n) = (n-1)*180/dimy; %#ok<*AGROW> 
                 elseif ~u_spokes
                     a(n) = (n-1)*360/dimy;
                 elseif (n-1) < dimy/2
@@ -750,7 +750,7 @@ classdef retroReco
             lowres_img = bart(app,'nufft -i -l6 -d16:16:1 -t', traj, kspace_pics_sum);
             lowres_ksp = bart(app,'fft -u 7', lowres_img);
             
-            highres_img = abs(bart(app,'nufft -i -t -l6 -d128:128:1 -t', traj, kspace_pics_sum));
+            highres_img = abs(bart(app,'nufft -i -t -l6 -d128:128:1 -t', traj, kspace_pics_sum)); %#ok<NASGU> 
             figure(1)
             imshow(abs(lowres_img),[0,1.5*max(abs(lowres_img(:)))]);
             
@@ -759,7 +759,7 @@ classdef retroReco
             ksp_zerop = bart(app, bartcommand, lowres_ksp);
             
             % calculate sensitivity map
-            sensitivities = bart(app, 'ecalib -m1', ksp_zerop);
+            sensitivities = bart(app, 'ecalib -m1', ksp_zerop); %#ok<NASGU> 
             
             %disp(size(sensitivities))
             %sensitivities = ones(128,128);
@@ -768,7 +768,7 @@ classdef retroReco
             sensitivities = ones(dimx,dimx,1,1,1,1,1,1,1,1,1,1,1);
             
             picscommand = ['pics -S -u1 -RW:6:0:',num2str(Wavelet),' -RT:6:0:',num2str(TVxy),' -RT:1024:0:',num2str(TVt),' -t'];
-            image_reg = bart(app,picscommand,traj,kspace_pics,sensitivities);
+            image_reg = bart(app,picscommand,traj,kspace_pics,sensitivities); %#ok<NASGU> 
             
             image_reg = bart(app,'nufft -i -l1 -d128:128:1 -t', traj, kspace_pics);
             
@@ -781,8 +781,8 @@ classdef retroReco
             sensemap = sensemap*1024/max(sensemap(:));
             
             % shift image in phase-encoding direction if needed
-            objReco.movie_exp = circshift(image_out,objData.pixelshift1,2);
-            objReco.sense_map = circshift(sensemap,objData.pixelshift1,2);
+            objReco.movieExp = circshift(image_out,objData.pixelshift1,2);
+            objReco.senseMap = circshift(sensemap,objData.pixelshift1,2);
             
             app.ProgressGauge.Value = 100;
             drawnow;
@@ -798,10 +798,10 @@ classdef retroReco
             
             % normalize the images to 2^15 range
             
-            objReco.movie_exp = round(32766*objReco.movie_exp/max(objReco.movie_exp(:)));
-            objReco.movie_app = objReco.movie_exp;
+            objReco.movieExp = round(32766*objReco.movieExp/max(objReco.movieExp(:)));
+            objReco.movieApp = objReco.movieExp;
             
-        end
+        end % normImages
         
         
 
@@ -811,46 +811,90 @@ classdef retroReco
         function objReco = determineMultiDimensions(objReco)
             
             % multislice
-            if size(objReco.movie_app,4) > 1
-                objReco.multiSlice_flag = true;
+            if size(objReco.movieApp,4) > 1
+                objReco.multiSliceFlag = true;
             else
-                objReco.multiSlice_flag = false;
+                objReco.multiSliceFlag = false;
             end
 
             % multidynamic
-            if size(objReco.movie_app,5) > 1
-                objReco.multiDynamic_flag = true;
+            if size(objReco.movieApp,5) > 1
+                objReco.multiDynamicFlag = true;
             else
-                objReco.multiDynamic_flag = false;
+                objReco.multiDynamicFlag = false;
             end
 
-        end
+        end % determineMultiDimensions
         
 
         
         % ---------------------------------------------------------------------------------
         % Left-right or up-down phase orientation
         % ---------------------------------------------------------------------------------
-        function objReco = phaseOrientation(objReco,objData,app)
+        function objReco = phaseOrientation(objReco, objData, app)
             
             % Phase_orientation correction for viewing
             
             if objData.PHASE_ORIENTATION
                 app.TextMessage('INFO: phase orientation = 1 / horizontal ... ')
-                objReco.movie_app = permute(rot90(permute(objReco.movie_app,[2,3,4,1,5]),1),[4,1,2,3,5]);
-                objReco.movie_app = flip(objReco.movie_app,3);
-                objReco.sense_map = rot90(objReco.sense_map,1);
-                objReco.sense_map = flip(objReco.sense_map,2);
+                objReco.movieApp = permute(rot90(permute(objReco.movieApp,[2,3,4,1,5]),1),[4,1,2,3,5]);
+                objReco.movieApp = flip(objReco.movieApp,3);
+                objReco.senseMap = rot90(objReco.senseMap,1);
+                objReco.senseMap = flip(objReco.senseMap,2);
             else
                 app.TextMessage('INFO: phase orientation = 0 / vertical ... ')
             end
             
-        end
+        end % phaseOrientation
         
         
-        
-        
-    end
+
+        % ---------------------------------------------------------------------------------
+        % Image reconstruction: SUR files
+        % ---------------------------------------------------------------------------------
+        function obj = recoSurFiles(obj, surpath, suffix, mrdfilename, rprfilename)
+
+            % SUR file names
+            surfiles = [surpath, suffix, '_00###.SUR'];
+
+            % Link with the server
+            m_Recon = actxserver('recon.Application');
+
+            set(m_Recon,'Visible',1);
+            set(m_Recon,'DisplayImages',1);
+
+            % Filenames
+            set(m_Recon,'DataFile',mrdfilename);
+            set(m_Recon,'RPRFile',rprfilename);
+            set(m_Recon,'ImageFile',surfiles);
+
+            % Delete old SUR files
+            scmd = ['del /Q ', surpath, '*.SUR'];
+            system(scmd);
+
+            % Do the reco
+            invoke(m_Recon,'Run');
+
+            % Wait for recon to complete
+            while get(m_Recon,'StatusID')~=4
+                if get(m_Recon,'StatusID')==5
+                    break;
+                end
+                pause(0.1);
+            end
+
+            % Stop the link
+            invoke(m_Recon,'Quit');
+
+        end % recoSurFiles
+
+
+
+
+
+
+
+    end % methods
     
-end
+end % retroReco
 

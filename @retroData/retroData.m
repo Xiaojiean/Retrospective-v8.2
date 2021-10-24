@@ -7,7 +7,9 @@ classdef retroData
         % Data
         data
         mrdFooter
+        newMrdFooter
         rprFile
+        newRprFile
         filename
         includeWindow                                                  
         excludeWindow 
@@ -71,15 +73,15 @@ classdef retroData
         nrKsteps
         
         % Flags
-        rpr_flag = false;
-        validData_flag = false;
-        multiCoil_flag = false
-        multi2D_flag = false
-        vfaData_flag = false
+        rprFlag = false;
+        validDataFlag = false;
+        multiCoilFlag = false
+        multi2DFlag = false
+        vfaDataFlag = false
         
         % Data and reconstruction type
         dataType = '2D'
-        reco_guess = 'systolic function'
+        recoGuess = 'systolic function'
         
     end
     
@@ -156,9 +158,9 @@ classdef retroData
                 if isfield(parameter,'nr_coils')
                     obj.nr_coils = parameter.nr_coils;
                     if obj.nr_coils > 1
-                        obj.multiCoil_flag = true;
+                        obj.multiCoilFlag = true;
                     else
-                        obj.multiCoil_flag = false;
+                        obj.multiCoilFlag = false;
                     end
                 end
                 
@@ -271,70 +273,67 @@ classdef retroData
         
         
         
+        
         % ---------------------------------------------------------------------------------
         % Check whether there are sufficient experiments to peform a valid reconstruction
         % ---------------------------------------------------------------------------------
-        function [obj,message] = checkNumberOfExperiments(obj)
+        function obj = checkNumberOfExperiments(obj, app)
             
             if obj.EXPERIMENT_ARRAY * obj.NO_VIEWS * obj.NO_VIEWS_2 * obj.NO_SLICES < 1024
-                obj.validData_flag = false;
-                message = 'ERROR: Not enough k-lines for reconstruction ...';
-            else
-                message = '';
+                obj.validDataFlag = false;
+                app.TextMessage('ERROR: Not enough k-lines for reconstruction ...');
             end
             
         end
         
         
         
+
         % ---------------------------------------------------------------------------------
         % Check the number of averages
         % ---------------------------------------------------------------------------------
-        function [obj,message] = checkNumberOfAverages(obj)
+        function obj = checkNumberOfAverages(obj, app)
             
             if obj.NO_AVERAGES > 1
-                obj.validData_flag = false;
-                message = 'ERROR: Number of averages should be 1 ...';
-            else
-                message = '';
+                obj.validDataFlag = false;
+                app.TextMessage('ERROR: Number of averages should be 1 ...');
             end
             
         end
         
         
+
         
         % ---------------------------------------------------------------------------------
         % Check for multi-slab data
         % ---------------------------------------------------------------------------------
-        function [obj,message] = checkForMultiSlab(obj)
+        function obj = checkForMultiSlab(obj, app)
             
             if strcmp(obj.dataType,'3D') && obj.NO_SLICES > 1
-                obj.validData_flag = false;
-                message = 'ERROR: Only 3D single-slab data supported ...';
-            else
-                message = '';
+                obj.validDataFlag = false;
+                app.TextMessage('ERROR: Only 3D single-slab data supported ...');
             end
             
         end
         
         
         
+
         % ---------------------------------------------------------------------------------
         % Check for variable flip angle data
         % ---------------------------------------------------------------------------------
-        function [obj,message] = checkForVFA(obj)
+        function obj = checkForVFA(obj, app)
             
             if strcmp(obj.dataType,'3D') && obj.VFA_size > 1
-                obj.vfaData_flag = true;
+                obj.vfaDataFlag = true;
                 obj = setVariableFlipAngles(obj);
-                message = strcat('INFO:',{' '},num2str(obj.VFA_size),{' '},'flip angles detected ...');
-            else
-                message = '';
+                app.TextMessage(strcat('INFO:',{' '},num2str(obj.VFA_size),{' '},'flip angles detected ...'));
             end
             
         end
         
         
+
         
         % ---------------------------------------------------------------------------------
         % Set the variable flip angles, sort the angles in groups
@@ -362,14 +361,15 @@ classdef retroData
         
         
         
+
         % ---------------------------------------------------------------------------------
         % Check if the data is a valid file with a motion navigator acquisition
         % ---------------------------------------------------------------------------------
-        function obj = acquisitionType(obj)
+        function obj = acquisitionType(obj, app)
             
             if obj.radial_on == 1
                 
-                obj.validData_flag = true;
+                obj.validDataFlag = true;
                 
                 obj.dataType = '2Dradial';
                 if ndims(obj.data{1}) == 3
@@ -383,7 +383,7 @@ classdef retroData
                 
             elseif (obj.slice_nav == 1) && (obj.no_samples_nav > 0)
                 
-                obj.validData_flag = true;
+                obj.validDataFlag = true;
                 
                 if obj.NO_VIEWS_2 > 1
                     
@@ -407,9 +407,9 @@ classdef retroData
                     
                     if obj.NO_SLICES > 1                                        % 2D multi-slice data
                         obj.dataType = '2Dms';
-                        obj.multi2D_flag = true;
+                        obj.multi2DFlag = true;
                     else
-                        obj.multi2D_flag = false;
+                        obj.multi2DFlag = false;
                     end
                     
                 end
@@ -419,16 +419,29 @@ classdef retroData
                     obj.nr_nav_points_used = obj.primary_navigator_point;
                 end
                 obj.nr_repetitions = size(obj.data{1},1);
+
+                % Message the user on the type of data
+                switch obj.dataType
+                    case '2D'
+                        app.TextMessage('2D single-slice data ...');
+                    case '3D'
+                        app.TextMessage('3D data ...');
+                    case '2Dms'
+                        app.TextMessage('2D multi-slice data ...');
+                    case '2Dradial'
+                        app.TextMessage('2D radial data ...');
+                end
                 
             else
                 
-                obj.validData_flag = false;
+                obj.validDataFlag = false;
                 
             end
             
         end
         
         
+
         
         % ---------------------------------------------------------------------------------
         % Guess which reconstruction type (systolic function, diastolic
@@ -440,11 +453,11 @@ classdef retroData
                 
                 if obj.nr_repetitions > 200
                     
-                    obj.reco_guess = 'diastolic function';
+                    obj.recoGuess = 'diastolic function';
                     
                 else
                     
-                    obj.reco_guess = 'systolic function';
+                    obj.recoGuess = 'systolic function';
                     
                 end
                 
@@ -458,7 +471,7 @@ classdef retroData
                 
                 if nr_unique_slices > 1
                     
-                    obj.reco_guess = 'scout';
+                    obj.recoGuess = 'scout';
                     
                 end
                 
@@ -466,11 +479,11 @@ classdef retroData
             
             if strcmp(obj.dataType,'3D')
                 
-                obj.reco_guess = 'systolic function';
+                obj.recoGuess = 'systolic function';
                 
-                if obj.vfaData_flag
+                if obj.vfaDataFlag
                     
-                    obj.reco_guess = 'variable flip-angle';
+                    obj.recoGuess = 'variable flip-angle';
                     
                 end
                 
@@ -478,12 +491,611 @@ classdef retroData
             
         end
         
+
+
+
+        % ---------------------------------------------------------------------------------
+        % Read MRD file
+        % ---------------------------------------------------------------------------------
+        function [im,dim,par,unsortedkspace] = importMRD(obj, filename, reordering1, reordering2)
+
+            % Description: Function to open multidimensional MRD/SUR files given a filename with PPR-parsing
+            % Read in MRD and SUR file formats
+            % Inputs: string filename, reordering1, reordering2
+            % reordering1, 2 is 'seq' or 'cen'
+            % reordering1 is for 2D (views)
+            % reordering2 is for 3D (views2)
+            % Outputs: complex data, raw dimension [no_expts,no_echoes,no_slices,no_views,no_views_2,no_samples], MRD/PPR parameters
+            % Author: Ruslan Garipov
+            % Date: 01/03/2014 - swapped views and views2 dimension - now correct
+            % 30 April 2014 - support for reading orientations added
+            % 11 September 2014 - swapped views and views2 in the array (otherwise the images are rotated)
+            % 13 October 2015 - scaling added as a parameter
+
+            fid = fopen(filename,'r');      % Define the file id
+            val = fread(fid,4,'int32');
+            xdim = val(1);
+            ydim = val(2);
+            zdim = val(3);
+            dim4 = val(4);
+            fseek(fid,18,'bof');
+            datatype=fread(fid,1, 'uint16');
+            datatype = dec2hex(datatype);
+            fseek(fid,48,'bof');
+            scaling = fread(fid,1, 'float32');
+            bitsperpixel = fread(fid,1, 'uchar');
+            fseek(fid,152,'bof');
+            val = fread(fid,2, 'int32');
+            dim5 = val(1);
+            dim6 = val(2);
+            fseek(fid,256,'bof');
+            text = fread(fid,256);
+            no_samples = xdim;  
+            no_views = ydim;    
+            no_views_2 = zdim;  
+            no_slices = dim4;
+            no_echoes = dim5;
+            no_expts = dim6;
+
+            % Read in the complex image data
+            dim = [no_expts,no_echoes,no_slices,no_views_2,no_views,no_samples];
+
+            if size(datatype,2)>1
+                onlydatatype = datatype(2);
+                iscomplex = 2;
+            else
+                onlydatatype = datatype(1);
+                iscomplex = 1;
+            end
+            switch onlydatatype
+                case '0'
+                    dataformat = 'uchar';   
+                case '1'
+                    dataformat = 'schar';   
+                case '2'
+                    dataformat = 'short';   
+                case '3'
+                    dataformat = 'int16';   
+                case '4'
+                    dataformat = 'int32';   
+                case '5'
+                    dataformat = 'float32'; 
+                case '6'
+                    dataformat = 'double';  
+                otherwise
+                    dataformat = 'int32';   
+            end
+
+            num2read = no_expts*no_echoes*no_slices*no_views_2*no_views*no_samples*iscomplex; %*datasize;
+            [m_total, count] = fread(fid,num2read,dataformat); % reading all the data at once
+
+            if iscomplex == 2
+                a=1:count/2;
+                m_real = m_total(2*a-1);
+                m_imag = m_total(2*a);
+                clear m_total;
+                m_C = m_real+m_imag*1i;
+                clear m_real m_imag;
+            else
+                m_C = m_total;
+                clear m_total;
+            end
+
+            unsortedkspace = m_C;
+
+            n=0;
+            % shaping the data manually:
+            ord=1:no_views;
+            if strcmp(reordering1,'cen')
+                for g=1:no_views/2
+                    ord(2*g-1)=no_views/2+g;
+                    ord(2*g)=no_views/2-g+1;
+                end
+            end
+
+            ord1 = 1:no_views_2;
+            ord2 = ord1;
+            if strcmp(reordering2,'cen')
+                for g=1:no_views_2/2
+                    ord2(2*g-1)=no_views_2/2+g;
+                    ord2(2*g)=no_views_2/2-g+1;
+                end
+            end
+
+            for a=1:no_expts
+                for b=1:no_echoes
+                    for c=1:no_slices
+                        for d=1:no_views
+                            for e=1:no_views_2
+                                m_C_1(a,b,c,ord(d),ord2(e),:) = m_C(1+n:no_samples+n); % sequential ordering
+                                n=n+no_samples;
+                            end
+                        end
+                    end
+                end
+            end
+
+            clear ord;
+            clear ord2;
+            m_C = squeeze(m_C_1);
+            clear m_C_1;
+            im=m_C;
+            clear m_C;
+            sample_filename = char(fread(fid,120,'uchar')');
+            ppr_text = char(fread(fid,Inf,'uchar')');
+            fclose(fid);
+
+            % Parse fields in ppr section of the MRD file
+            if numel(ppr_text)>0
+                cell_text = textscan(ppr_text,'%s','delimiter',char(13));
+                PPR_keywords = {'BUFFER_SIZE','DATA_TYPE','DECOUPLE_FREQUENCY','DISCARD','DSP_ROUTINE','EDITTEXT','EXPERIMENT_ARRAY','FOV','FOV_READ_OFF','FOV_PHASE_OFF','FOV_SLICE_OFF','GRADIENT_STRENGTH','MULTI_ORIENTATION','Multiple Receivers','NO_AVERAGES','NO_ECHOES','NO_RECEIVERS','NO_SAMPLES','NO_SLICES','NO_VIEWS','NO_VIEWS_2','OBLIQUE_ORIENTATION','OBSERVE_FREQUENCY','ORIENTATION','PHASE_CYCLE','READ/PHASE/SLICE_SELECTION','RECEIVER_FILTER','SAMPLE_PERIOD','SAMPLE_PERIOD_2','SCROLLBAR','SLICE_BLOCK','SLICE_FOV','SLICE_INTERLEAVE','SLICE_THICKNESS','SLICE_SEPARATION','SPECTRAL_WIDTH','SWEEP_WIDTH','SWEEP_WIDTH_2','VAR_ARRAY','VIEW_BLOCK','VIEWS_PER_SEGMENT','SMX','SMY','SWX','SWY','SMZ','SWZ','VAR','PHASE_ORIENTATION','X_ANGLE','Y_ANGLE','Z_ANGLE','PPL','IM_ORIENTATION','IM_OFFSETS'};
+                %PPR_type_0 keywords have text fields only, e.g. ":PPL C:\ppl\smisim\1ge_tagging2_1.PPL"
+                PPR_type_0 = [23 53];
+                %PPR_type_1 keywords have single value, e.g. ":FOV 300"
+                PPR_type_1 = [8 42:47];
+                %PPR_type_2 keywords have single variable and single value, e.g. ":NO_SAMPLES no_samples, 16"
+                PPR_type_2 = [4 7 9:11 15:21 25 31 33 41 49];
+                PPR_type_3 = 48; % VAR keyword only (syntax same as above)
+                PPR_type_4 = [28 29]; % :SAMPLE_PERIOD sample_period, 300, 19, "33.3 KHz  30 ?s" and SAMPLE_PERIOD_2 - read the first number=timeincrement in 100ns
+                %PPR_type_5 keywords have single variable and two values, e.g. ":SLICE_THICKNESS gs_var, -799, 100"
+                PPR_type_5 = [34 35];
+                % KEYWORD [pre-prompt,] [post-prompt,] [min,] [max,] default, variable [,scale] [,further parameters ...];
+                PPR_type_6 = [39 50:52]; % VAR_ARRAY and angles keywords
+                PPR_type_7 = [54 55]; % IM_ORIENTATION and IM_OFFSETS (SUR only)
+
+                par = struct('filename',filename);
+                for j=1:size(cell_text{1},1)
+                    char1 = char(cell_text{1}(j,:));
+                    field_ = '';
+                    if ~isempty(char1)
+                        C = textscan(char1, '%*c%s %s', 1);
+                        field_ = char(C{1});
+                    end
+                    % find matching number in PPR_keyword array:
+                    num = find(strcmp(field_,PPR_keywords));
+                    if num>0
+                        if find(PPR_type_3==num) % :VAR keyword
+                            C = textscan(char1, '%*s %s %f');
+                            field_title = char(C{1}); field_title(numel(field_title)) = [];
+                            numeric_field = C{2};
+                            par = setfield(par, field_title, numeric_field); %#ok<*SFLD> 
+                        elseif find(PPR_type_1==num)
+                            C = textscan(char1, '%*s %f');
+                            numeric_field = C{1};
+                            par = setfield(par, field_, numeric_field);
+                        elseif find(PPR_type_2==num)
+                            C = textscan(char1, '%*s %s %f');
+                            numeric_field = C{2};
+                            par = setfield(par, field_, numeric_field);
+                        elseif find(PPR_type_4==num)
+                            C = textscan(char1, '%*s %s %n %n %s');
+                            field_title = char(C{1}); field_title(numel(field_title)) = []; %#ok<*NASGU> 
+                            numeric_field = C{2};
+                            par = setfield(par, field_, numeric_field);
+                        elseif find(PPR_type_0==num)
+                            C = textscan(char1, '%*s %[^\n]');
+                            text_field = char(C{1}); %text_field = reshape(text_field,1,[]);
+                            par = setfield(par, field_, text_field);
+                        elseif  find(PPR_type_5==num)
+                            C = textscan(char1, '%*s %s %f %c %f');
+                            numeric_field = C{4};
+                            par = setfield(par, field_, numeric_field);
+                        elseif  find(PPR_type_6==num)
+                            C = textscan(char1, '%*s %s %f %c %f', 100);
+                            field_ = char(C{1}); field_(end) = [];% the name of the array
+                            num_elements = C{2}; % the number of elements of the array
+                            numeric_field = C{4};
+                            multiplier = [];
+                            for l=4:numel(C)
+                                multiplier = [multiplier C{l}];
+                            end
+                            pattern = ':';
+                            k=1;
+                            tline = char(cell_text{1}(j+k,:));
+                            while (~contains(tline, pattern))
+                                tline = char(cell_text{1}(j+k,:));
+                                arr = textscan(tline, '%*s %f', num_elements);
+                                multiplier = [multiplier, arr{1}']; %#ok<*AGROW> 
+                                k = k+1;
+                                tline = char(cell_text{1}(j+k,:));
+                            end
+                            par = setfield(par, field_, multiplier);
+                        elseif find(PPR_type_7==num) % :IM_ORIENTATION keyword
+                            C = textscan(char1, '%s %f %f %f');
+                            field_title = char(C{1}); field_title(1) = [];
+                            numeric_field = [C{2}, C{3}, C{4}];
+                            par = setfield(par, field_title, numeric_field);
+                        end
+                    end
+                end
+                if isfield('OBSERVE_FREQUENCY','par')
+                    C = textscan(par.OBSERVE_FREQUENCY, '%q');
+                    text_field = char(C{1});
+                    par.Nucleus = text_field(1,:);
+                else
+                    par.Nucleus = 'Unspecified';
+                end
+                par.datatype = datatype;
+                file_pars = dir(filename);
+                par.date = file_pars.date;
+            else
+                par = [];
+            end
+            par.scaling = scaling;
+
+        end % ImportMRD
+
+
+       
         
+        % ---------------------------------------------------------------------------------
+        % Import B-type scanner data
+        % ---------------------------------------------------------------------------------
+        function [rawData, parameters] = importB(obj, app) %#ok<*INUSL> 
+
+            % Import path
+            importPath = app.mrdImportPath;
+
+            % Parameters
+            info1 = jcampread(strcat(importPath,'acqp'));
+            info2 = jcampread(strcat(importPath,'method'));
+
+            % Scanner type
+            parameters.scanner = 'B-type';
+
+            % Slices
+            parameters.NO_SLICES = str2num(info1.NSLICES);
+            parameters.SLICE_THICKNESS = str2num(info2.pvm.slicethick) * parameters.NO_SLICES;
+
+            % Matrix in readout direction
+            parameters.NO_SAMPLES = info1.acq.size(1) / 2;
+            if isfield(info2.pvm,"matrix")
+                parameters.NO_VIEWS = info2.pvm.encmatrix(1);
+            end
+
+            % Matrix in phase encoding direction
+            parameters.NO_VIEWS = info1.acq.size(2);
+            if isfield(info2.pvm,"matrix")
+                parameters.NO_VIEWS = info2.pvm.encmatrix(2);
+            end
+
+            % Phase encoding orientation
+            parameters.PHASE_ORIENTATION = 1;
+            pm1 = -1;
+            pm2 = -1;
+            if isfield(info2.pvm,'spackarrreadorient')
+                if strcmp(info2.pvm.spackarrreadorient,'L_R')
+                    parameters.PHASE_ORIENTATION = 0;
+                    flr =  1;
+                    pm1 = +1;
+                    pm2 = -1;
+                end
+                if strcmp(info2.pvm.spackarrreadorient,'A_P')
+                    parameters.PHASE_ORIENTATION = 1;
+                    flr =  0;
+                    pm1 = -1;
+                    pm2 = -1;
+                end
+                if strcmp(info2.pvm.spackarrreadorient,'H_F')
+                    parameters.PHASE_ORIENTATION = 1;
+                    flr =  0;
+                    pm1 = -1;
+                    pm2 = -1;
+                end
+            end
+
+            % Matrix in 2nd phase encoding direction
+            parameters.NO_VIEWS_2 = 1;
+            parameters.pe2_centric_on = 0;
+
+            % FOV
+            parameters.FOV = info1.acq.fov(1)*10;
+            parameters.FOV2 = info1.acq.fov(2)*10;
+            parameters.FOVf = round(8*parameters.FOV2/parameters.FOV);
+
+            % Sequence parameters
+            parameters.tr = info1.acq.repetition_time;
+            parameters.te = info1.acq.echo_time;
+            parameters.alpha = str2num(info1.acq.flip_angle);
+            parameters.NO_ECHOES = 1;
+            parameters.NO_AVERAGES = str2num(info1.NA);
+
+            % Other parameters
+            parameters.date = datetime;
+            parameters.nucleus = '1H';
+            parameters.PPL = 'Navigator Sequence';
+            parameters.filename = 'Proton';
+            parameters.field_strength = str2num(info1.BF1)/42.58; %#ok<*ST2NM> 
+            parameters.filename = 111;
+            parameters.pe1_order = 2;
+            parameters.radial_on = 0;
+            parameters.slice_nav = 1;
+
+            % Number of navigator points
+            if isfield(info2.pvm,"navpoints")
+                parameters.no_samples_nav = str2num(info2.pvm.navpoints);
+            else
+                parameters.no_samples_nav = str2num(info2.NavSize) / 2;
+            end
+
+            % Number of receiver coils
+            parameters.nr_coils = str2num(info2.pvm.encnreceivers);
+
+            % Trajectory 1st phase encoding direction
+            if isfield(info2.pvm,'ppggradamparray1')
+                if isfield(info2.pvm,'enczfaccel1') && isfield(info2.pvm,'encpftaccel1')
+                    parameters.gp_var_mul = round(pm1 * info2.pvm.ppggradamparray1 * str2num(info2.pvm.enczfaccel1) * str2num(info2.pvm.encpftaccel1) * (parameters.NO_VIEWS / 2 - 0.5));
+                else
+                    parameters.gp_var_mul = round(pm1 * info2.pvm.ppggradamparray1 * (parameters.NO_VIEWS / 2 - 0.5));
+                end
+                parameters.pe1_order = 3;
+            elseif isfield(info2.pvm,'encvalues1')
+                if isfield(info2.pvm,'enczf') && isfield(info2.pvm,'encpft')
+                    parameters.gp_var_mul = round(pm1 * info2.pvm.encvalues1 * info2.pvm.enczf(2) * info2.pvm.encpft(2) * (parameters.NO_VIEWS / 2 - 0.5));
+                else
+                    parameters.gp_var_mul = round(pm1 * info2.pvm.encvalues1 * (parameters.NO_VIEWS / 2 - 0.5));
+                end
+                parameters.pe1_order = 3;
+            else
+                % assume zigzag
+                parameters.pe1_order = 2;
+            end
+
+            % Data type
+            datatype = 'int32';
+            if isfield(info1.acq,'word_size')
+                if strcmp(info1.acq.word_size,'_32_BIT')
+                    datatype = 'int32';
+                end
+                if strcmp(info1.acq.word_size,'_16_BIT')
+                    datatype = 'int16';
+                end
+            end
+
+            % Read data
+            if isfile(strcat(importPath,'fid.orig'))
+                fileID = fopen(strcat(importPath,'fid.orig'));
+            else
+                fileID = fopen(strcat(importPath,'rawdata.job0'));
+            end
+            dataRaw = fread(fileID,datatype);
+            fclose(fileID);
+            kreal = dataRaw(1:2:end);
+            kim = dataRaw(2:2:end);
+            kspace = kreal + 1j*kim;
+
+            % Read navigator
+            if isfile(strcat(importPath,'fid.NavFid'))
+                fileID = fopen(strcat(importPath,'fid.NavFid'));
+            else
+                fileID = fopen(strcat(importPath,'rawdata.job1'));
+            end
+            navdata = fread(fileID,datatype);
+            fclose(fileID);
+            kreal = navdata(1:2:end);
+            kim = navdata(2:2:end);
+            navkspace = kreal + 1j*kim;
+
+            % Phase offset
+            if isfield(info1.acq,'phase1_offset')
+                parameters.pixelshift1 = round(pm1 * parameters.NO_VIEWS * info1.acq.phase1_offset / parameters.FOV);
+            end
+
+            % 2D data
+            if strcmp(info2.pvm.spatdimenum,"2D") || strcmp(info2.pvm.spatdimenum,"<2D>")
+
+                % Imaging k-space
+                kspace = reshape(kspace,parameters.NO_SLICES,parameters.NO_SAMPLES,parameters.nr_coils,parameters.NO_VIEWS,[]);
+                parameters.EXPERIMENT_ARRAY = size(kspace,5);
+                kspace = permute(kspace,[3,5,1,4,2]); % nc, nr, ns, np, nf
+
+                % Flip readout if needed
+                if flr
+                    kspace = flip(kspace,5);
+                end
+
+                % Coil intensity scaling
+                if isfield(info2.pvm,'encchanscaling')
+                    for i = 1:parameters.nr_coils
+                        kspace(i,:) = kspace(i,:) * info2.pvm.encchanscaling(i);
+                    end
+                end
+
+                % Navigator
+                navkspace = reshape(navkspace,parameters.NO_SLICES,parameters.no_samples_nav,parameters.nr_coils,parameters.NO_VIEWS,parameters.EXPERIMENT_ARRAY);
+                navkspace = permute(navkspace,[3,5,1,4,2]);
+
+                % 34 point spacer
+                kspacer = zeros(parameters.nr_coils,parameters.EXPERIMENT_ARRAY,parameters.NO_SLICES,parameters.NO_VIEWS,34);
+
+                % Combine navigator + spacer + k-space
+                raw = cat(5,navkspace,kspacer,kspace);
+                rawData = cell(parameters.nr_coils);
+                for i = 1:parameters.nr_coils
+                    rawData{i} = squeeze(raw(i,:,:,:,:));
+                    rawData{i} = reshape(rawData{i},parameters.EXPERIMENT_ARRAY,parameters.NO_SLICES,parameters.NO_VIEWS,parameters.NO_SAMPLES+34+parameters.no_samples_nav);
+                end
+
+            end
+
+            % 3D data
+            if strcmp(info2.pvm.spatdimenum,"3D") || strcmp(info2.pvm.spatdimenum,"<3D>")
+
+                % 2nd phase encoding direction
+                parameters.NO_VIEWS_2 = info1.acq.size(3);
+                if isfield(info2.pvm,"matrix")
+                    parameters.NO_VIEWS = info2.pvm.encmatrix(3);
+                end
+
+                % Phase offset 2
+                if isfield(info1.acq,'phase2_offset')
+                    parameters.pixelshift2 = round(pm2 * parameters.NO_VIEWS_2 * info1.acq.phase2_offset/parameters.FOV);
+                end
+
+                % Slice thickness
+                parameters.SLICE_THICKNESS = str2num(info2.pvm.slicethick);
+
+                % 2nd phase encoding trajectory
+                parameters.pe2_centric_on = 0;
+                if isfield(info2.pvm,"encsteps2")
+                    parameters.pe2_traj = info2.pvm.encsteps2;
+                    parameters.pe2_centric_on = 2;
+                end
+                if isfield(info2.pvm,'encvalues2')
+                    parameters.pe2_traj = round(info2.pvm.encvalues2 * (parameters.NO_VIEWS_2/2-0.5));
+                    parameters.pe2_centric_on = 2;
+                end
+
+                % K-space
+                kspace = reshape(kspace,parameters.nr_coils,parameters.NO_SAMPLES,parameters.NO_VIEWS,parameters.NO_VIEWS_2,[]);
+                parameters.EXPERIMENT_ARRAY = size(kspace,5);
+                kspace = permute(kspace,[1,5,4,3,2]);
+
+                % Flip readout if needed
+                if flr
+                    kspace = flip(kspace,5);
+                end
+
+                % Coil intesnity scaling
+                if isfield(info2.pvm,'encchanscaling')
+                    for i = 1:parameters.nr_coils
+                        kspace(i,:) = kspace(i,:) * info2.pvm.encchanscaling(i);
+                    end
+                end
+
+                % Navigator
+                navkspace = reshape(navkspace,parameters.nr_coils,parameters.no_samples_nav,parameters.NO_VIEWS,parameters.NO_VIEWS_2,parameters.EXPERIMENT_ARRAY);
+                navkspace = permute(navkspace,[1,5,4,3,2]);
+
+                % 34 point spacer
+                kspacer = zeros(parameters.nr_coils,parameters.EXPERIMENT_ARRAY,parameters.NO_VIEWS_2,parameters.NO_VIEWS,34);
+
+                % Combine navigator + spacer + k-space
+                raw = cat(5,navkspace,kspacer,kspace);
+                for i = 1:parameters.nr_coils
+                    rawData{i} = squeeze(raw(i,:,:,:,:));
+                    rawData{i} = reshape(rawData{i},parameters.EXPERIMENT_ARRAY,parameters.NO_VIEWS_2,parameters.NO_VIEWS,parameters.NO_SAMPLES+34+parameters.no_samples_nav);
+                end
+
+            end
+
+            % read reco files to a structure
+            function struct = jcampread(filename)
+
+                % Open file read-only big-endian
+                [fid,message]=fopen(filename,'r','b');
+                skipline=0;
+
+                % Loop through separate lines
+                if fid~=-1
+                    while 1
+                        if skipline
+                            line=nextline;
+                            skipline=0;
+                        else
+                            line=fgetl(fid);
+                        end
+                        % Testing the text lines
+                        while length(line)<2
+                            line=fgetl(fid);
+                        end
+                        % Parameters and optional size of parameter are on lines starting with '##'
+                        if line(1:2) == '##' %#ok<*BDSCA> 
+                            % Parameter extracting and formatting
+                            % Read parameter name
+                            paramname = fliplr(strtok(fliplr(strtok(line,'=')),'#'));
+                            % Check for illegal parameter names starting with '$' and correct (Matlab does not accepts variable names starting with $)
+                            if paramname(1) == '$'
+                                paramname = paramname(2:length(paramname));
+                                % Check if EOF, if true return
+                            elseif paramname(1:3) == 'END'
+                                break
+                            end
+                            % Parameter value formatting
+                            paramvalue = fliplr(strtok(fliplr(line),'='));
+
+                            % Check if parameter values are in a matrix and read the next line
+                            if paramvalue(1) == '('
+                                paramvaluesize = str2num(fliplr(strtok(fliplr(strtok(paramvalue,')')),'(')));
+                                % Create an empty matrix with size 'paramvaluesize' check if only one dimension
+                                if ~isempty(paramvaluesize)
+                                    if size(paramvaluesize,2) == 1
+                                        paramvaluesize = [paramvaluesize,1];  
+                                    end
+                                    % Read the next line
+                                    nextline = fgetl(fid);
+                                    % See whether next line contains a character array
+                                    if nextline(1) == '<'
+                                        paramvalue = fliplr(strtok(fliplr(strtok(nextline,'>')),'<')); %#ok<*NASGU> 
+                                    elseif strcmp(nextline(1),'L') || strcmp(nextline(1),'A') || strcmp(nextline(1),'H')
+                                        paramvalue = nextline;
+                                    else
+                                        % Check if matrix has more then one dimension
+                                        if paramvaluesize(2) ~= 1
+                                            paramvaluelong = str2num(nextline);
+                                            while (length(paramvaluelong)<(paramvaluesize(1)*paramvaluesize(2))) & (nextline(1:2) ~= '##') %#ok<*AND2> 
+                                                nextline = fgetl(fid);
+                                                paramvaluelong = [paramvaluelong str2num(nextline)];  
+                                            end
+                                            if (length(paramvaluelong)==(paramvaluesize(1)*paramvaluesize(2))) & (~isempty(paramvaluelong))
+                                                paramvalue=reshape(paramvaluelong,paramvaluesize(1),paramvaluesize(2));
+                                            else
+                                                paramvalue=paramvaluelong;
+                                            end
+                                            if length(nextline)>1
+                                                if (nextline(1:2) ~= '##')
+                                                    skipline=1;
+                                                end
+                                            end
+                                        else
+                                            % If only 1 dimension just assign whole line to paramvalue
+                                            paramvalue = str2num(nextline);
+                                            if ~isempty(str2num(nextline))
+                                                while length(paramvalue)<paramvaluesize(1)
+                                                    line=fgetl(fid);
+                                                    paramvalue = [paramvalue str2num(line)];  
+                                                end
+                                            end
+                                        end
+                                    end
+                                else
+                                    paramvalue='';
+                                end
+                            end
+
+                            % Add paramvalue to structure.paramname
+                            if isempty(findstr(paramname,'_')) 
+                                eval(['struct.' paramname '= paramvalue;']); %#ok<*EVLDOT> 
+                            else
+                                try
+                                    eval(['struct.' lower(paramname(1:findstr(paramname,'_')-1)) '.' lower(paramname(findstr(paramname,'_')+1:length(paramname))) '= paramvalue;']);
+                                catch
+                                    eval(['struct.' lower(paramname(1:findstr(paramname,'_')-1)) '.' datestr(str2num(paramname(findstr(paramname,'_')+1:findstr(paramname,'_')+2)),9) ...
+                                        paramname(findstr(paramname,'_')+2:length(paramname)) '= paramvalue;']); %#ok<*FSTR> 
+                                end
+                            end
+                        elseif line(1:2) == '$$'
+                            % The two $$ lines are not parsed for now
+                        end
+                    end
+                    % Close file
+                    fclose(fid);
+                else
+                    disp(message)
+                    struct=-1;
+                end
+
+            end
+
+        end % importB
+
+
+
         
         % ---------------------------------------------------------------------------------
         % Read the MRD footer
         % ---------------------------------------------------------------------------------
-        function [obj,message] = readMRDfooter(obj,mrdfile)
+        function obj = readMrdFooter(obj, app, mrdfile)
             
             try
                 
@@ -544,12 +1156,10 @@ classdef retroData
                 obj.mrdFooter = char(fread(fid,Inf,'uchar')');
                 fclose(fid);
                 
-                message = '';
-                
             catch ME
                 
-                obj.validData_flag = false;
-                message = ME.message;
+                obj.validDataFlag = false;
+                app.TextMessage(ME.message);
                 
             end
             
@@ -557,30 +1167,270 @@ classdef retroData
         
         
         
+        
+        % ---------------------------------------------------------------------------------
+        % Write MRD file
+        % ---------------------------------------------------------------------------------
+        function obj = writeDataToMrd(obj, objKspace, filename, parameters)
+
+            % Description: Function to convert multidimensional complex data to MRD format file
+            % Author: Ruslan Garipov / MR Solutions Ltd
+            % Date: 17/04/2020
+            % Inputs: string filename, N-dimensional data matrix, dimensions structure with the following fields:
+            % .NoExperiments
+            % .NoEchoes
+            % .NoSlices
+            % .NoSamples
+            % .NoViews
+            % .NoViews2
+            % footer - int8 data type footer as copied from an MRD containing a copy of
+            % the PPR file, including preceeding 120-byte zeros
+            % Output: 1 if write was successful, 0 if not, -1 if failed early (e.g. the dimension checks)
+
+            % data: multidimensional, complex float, with dimensions arranged
+            % dimensions: structure
+
+            kSpaceMRDdata = objKspace.kSpaceMrd;
+            footer = obj.newMrdFooter;
+
+            % Get dimensions of the actual image data
+            if (size(kSpaceMRDdata,1)~=parameters.NoSamples)
+                return;
+            end
+            if (size(kSpaceMRDdata,2)>1)
+                if (size(kSpaceMRDdata,2)~=parameters.NoViews)
+                    return;
+                end
+            end
+            if (size(kSpaceMRDdata,3)>1)
+                if (size(kSpaceMRDdata,3)~=parameters.NoViews2)
+                    return;
+                end
+            end
+            if (size(kSpaceMRDdata,4)>1)
+                if (size(kSpaceMRDdata,4)~=parameters.NoSlices)
+                    return;
+                end
+            end
+            if (size(kSpaceMRDdata,5)>1)
+                if (size(kSpaceMRDdata,5)~=parameters.NoEchoes)
+                    return;
+                end
+            end
+            if (size(kSpaceMRDdata,6)>1)
+                if (size(kSpaceMRDdata,6)~=parameters.NoExperiments)
+                    return;
+                end
+            end
+
+            header1 = zeros(128,1); % 4x128=512 bytes
+            header1(1)  = parameters.NoSamples;
+            header1(2)  = parameters.NoViews;
+            header1(3)  = parameters.NoViews2;
+            header1(4)  = parameters.NoSlices;
+            header1(39) = parameters.NoEchoes;
+            header1(40) = parameters.NoExperiments;
+
+            % Set datatype - 'complex float'
+            header1(5)  = hex2dec('150000');
+
+            % Open new file for writing
+            fid1 = fopen(filename,'wb');
+
+            % Write 512 byte header
+            fwrite(fid1,header1,'int32');
+
+            % For 3D data flip the 2nd and 3rd dimension
+            if (size(kSpaceMRDdata,3)>1)
+                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[1,3,2,4,5,6,7]),2);
+            end
+
+            % Convert to 1D array with alternating real and imag part of the data
+            temp = kSpaceMRDdata;
+            temp = temp(:);
+            a = real(temp);
+            b = imag(temp);
+            temp = transpose([a b]);
+            temp = temp(:);
+
+            % Write data at once
+            fwrite(fid1,temp,'float32');
+
+            % write the footer
+            fwrite(fid1,footer,'int8');
+
+            % close file
+            fclose(fid1);
+
+        end % writeDataToMrd
+
+
+        
+
+        % ---------------------------------------------------------------------------------
+        % Make MRD footer
+        % ---------------------------------------------------------------------------------
+        function obj = makeMrdFooter(obj, par)
+
+            inputFooter = obj.mrdFooter;
+
+            parameters = {':NO_SAMPLES no_samples, ',':NO_VIEWS no_views, ',':NO_VIEWS_2 no_views_2, ', ...
+                ':NO_ECHOES no_echoes, ',':EXPERIMENT_ARRAY no_experiments, ',':NO_AVERAGES no_averages, ', ...
+                ':VAR pe1_order, ',':VAR slice_nav, ',':VAR radial_on, ', ...
+                ':VAR frame_loop_on, ',':VAR tr, ',':VAR te, ', ...
+                ':BATCH_SLICES batch_slices, ',':NO_SLICES no_slices, ', ...
+                ':VAR VFA_size, ',':VAR ti, ',':VAR pe2_centric_on, ', ...
+                ':VAR tr_extra_us, '
+                };
+
+            replacePars = {par.NoSamples,par.NoViews,par.NoViews2, ...
+                par.NoEchoes,par.NoExperiments,par.NoAverages, ...
+                par.peorder,par.slicenav,par.radialon, ...
+                par.frameloopon,par.tr,par.te, ...
+                par.batchslices,par.NoSlices, ...
+                par.vfasize, par.ti, par.pe2_centric_on, ...
+                par.tr_extra_us
+                };
+
+            % Replace all simple valued parameters
+            for i = 1:length(parameters)
+
+                txt = parameters{i};
+                var = replacePars{i};
+
+                pos = strfind(inputFooter,txt);
+
+                if ~isempty(pos)
+                    oldTextLength = strfind(inputFooter(pos+length(txt):pos+length(txt)+6),char(13))-1;
+                    newText = [num2str(var),'     '];
+                    newText = newText(1:6);
+                    inputFooter = replaceBetween(inputFooter,pos+length(txt),pos+length(txt)+oldTextLength-1,newText);
+                end
+
+            end
+
+            % VFA array replace
+            newText = '';
+            for i = 1:length(par.vfaangles)
+                newText = newText + ", " + num2str(par.vfaangles(i));
+                if mod(i,8) == 2
+                    newText = newText + newline;
+                end
+            end
+            txt = ':VAR_ARRAY VFA_angles, ';
+            pos1 = strfind(inputFooter,txt);
+            newStr = extractAfter(inputFooter,pos1);
+            pos2 = strfind(newStr,':');
+            pos3 = pos1+pos2(1)-2;
+            inputFooter = replaceBetween(inputFooter,pos1+length(txt)-2,pos3,newText);
+
+            % Return the object
+            obj.newMrdFooter  = inputFooter;
+
+        end % makeMrdFooter
+
+
+
+
         % ---------------------------------------------------------------------------------
         % Read RPR file
         % ---------------------------------------------------------------------------------
-        function [obj,message] = readRPRfile(obj,filename)
+        function obj = readRprfile(obj, app, filename)
             
             try
                 fid = fopen(filename,'r');
                 obj.rprFile = char(fread(fid,Inf,'uchar')');
                 fclose(fid);
-                obj.rpr_flag = true;
-                message = '';
+                obj.rprFlag = true;
             catch
                 obj.rprFile = '';
-                obj.rpr_flag = false;
-                message = 'WARNING: rpr file not found ...';
+                obj.rprFlag = false;
+                app.TextMessage('WARNING: rpr file not found ...');
             end
             
         end
         
         
+
+
+        % ---------------------------------------------------------------------------------
+        % Write RPR file
+        % ---------------------------------------------------------------------------------
+        function obj = writeToRprFile(obj, filename)
+
+            fid = fopen(filename,'wb');
+            fwrite(fid,obj.newRprFile,'int8');
+            fclose(fid);
+
+        end % writeToRprFile
         
+
+
+
+        % ---------------------------------------------------------------------------------
+        % Make RPR file
+        % ---------------------------------------------------------------------------------
+        function obj = makeRprFile(obj, par)
+
+            inputrpr = obj.rprFile;
+
+            parameters = {
+                ':EDITTEXT LAST_ECHO ',':EDITTEXT MAX_ECHO ', ...
+                ':EDITTEXT LAST_EXPT ',':EDITTEXT MAX_EXPT ', ...
+                ':EDITTEXT SAMPLES_DIM1 ',':EDITTEXT DATA_LENGTH1 ', ':EDITTEXT OUTPUT_SIZE1 ', ...
+                ':EDITTEXT SAMPLES_DIM2 ',':EDITTEXT DATA_LENGTH2 ', ':EDITTEXT OUTPUT_SIZE2 ', ...
+                ':EDITTEXT SAMPLES_DIM3 ',':EDITTEXT DATA_LENGTH3 ', ':EDITTEXT OUTPUT_SIZE3 ', ...
+                ':EDITTEXT LAST_SLICE ',':EDITTEXT MAX_SLICE ', ...
+                ':COMBOBOX FFT_DIM1 ',':COMBOBOX FFT_DIM2 ',':COMBOBOX FFT_DIM3 ', ...
+                ':RADIOBUTTON VIEW_ORDER_2'
+                };
+
+            replacepars = {par.NoEchoes,par.NoEchoes, ...
+                par.NoExperiments, par.NoExperiments, ...
+                par.NoSamples, par.NoSamples, par.NoSamples, ...
+                par.NoViews, par.NoViews, par.NoViews, ...
+                par.NoViews2, par.NoViews2, par.NoViews2, ...
+                par.NoSlices, par.NoSlices, ...
+                par.NoSamples, par.NoViews, par.NoViews2, ...
+                par.View2order
+                };
+
+            for i = 1:length(parameters)
+
+                txt = parameters{i};
+                var = replacepars{i};
+
+                pos = strfind(inputrpr,txt);
+
+                if ~isempty(pos)
+
+                    if ~isstring(var)
+
+                        oldtxtlength = strfind(inputrpr(pos+length(txt):pos+length(txt)+15),char(13))-1;
+                        newtext = [num2str(var),'     '];
+                        newtext = newtext(1:6);
+                        inputrpr = replaceBetween(inputrpr,pos+length(txt),pos+length(txt)+oldtxtlength-1,newtext);
+
+                    else
+
+                        oldtxtlength = strfind(inputrpr(pos+length(txt):pos+length(txt)+15),char(13))-1;
+                        newtext = strcat(" ",var,"           ");
+                        newtext = extractBefore(newtext,12);
+                        inputrpr = replaceBetween(inputrpr,pos+length(txt),pos+length(txt)+oldtxtlength-1,newtext);
+
+                    end
+
+                end
+
+            end
+
+            obj.newRprFile = inputrpr;
+
+        end % makeRprFile
+
+
         
-        
-    end
+    end % methods
     
-end
+end % retroData
 

@@ -1,7 +1,7 @@
 % ---------------------------------------------------------------
 %           DICOM Export for Retrospective app
 % ---------------------------------------------------------------
-function folderName = export_dicom_dcm(app,dcmdir,dcmExportDir,acqDur,recoType)
+function folderName = retroExportDicomDcm(app,dcmdir,dcmExportDir,acqDur,recoType)
 
 % Correct phase orientation for DCM export
 if app.retroDataPars.PHASE_ORIENTATION

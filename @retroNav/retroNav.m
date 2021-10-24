@@ -5,15 +5,15 @@ classdef retroNav
     properties
       
         % Raw navigator
-        nav_amplitude
-        nav_phase
-        up_down = 1
+        navAmplitude
+        navPhase
+        upDown = 1
         
         % Filtering
-        physiofiltersettings
+        physioFilterSettings
         detectedHR
         detectedRR
-        powerspectrum
+        powerSpectrum
         frequency
         bandwidthHR
         bandwidthRR
@@ -59,15 +59,15 @@ classdef retroNav
         % ---------------------------------------------------------------------------------
         % Read navigator up/down flip switch value
         % ---------------------------------------------------------------------------------
-        function obj = readFlipSwitch(obj,flipswitchvalue)
+        function obj = readFlipSwitch(obj, app)
             
-            switch flipswitchvalue
+            switch app.NavigatorFlipSwitch.Value
                 
                 case 'Up'
-                    obj.up_down = 1;
+                    obj.upDown = 1;
                     
                 case 'Down'
-                    obj.up_down = -1;
+                    obj.upDown = -1;
                     
             end
             
@@ -78,7 +78,7 @@ classdef retroNav
         % ---------------------------------------------------------------------------------
         % Extract the navigator signals
         % ---------------------------------------------------------------------------------
-        function objNav = extractNavigator(objNav,objData)
+        function objNav = extractNavigator(objNav, objData)
             
             switch objData.dataType
                 
@@ -102,7 +102,7 @@ classdef retroNav
             % ---------------------------------------------------------------------------------
             function amplitude = extractNavigator2D
                 
-                objNav.nav_amplitude = cell(objData.nr_coils);
+                objNav.navAmplitude = cell(objData.nr_coils);
                 
                 for coilnr = 1:objData.nr_coils
                     
@@ -146,10 +146,10 @@ classdef retroNav
                     end
                     
                     % multiple with +1 or -1 depending on switch
-                    amplitude = amplitude * objNav.up_down;
+                    amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude array
-                    objNav.nav_amplitude{coilnr} = amplitude;
+                    objNav.navAmplitude{coilnr} = amplitude;
                     
                 end
                 
@@ -163,7 +163,7 @@ classdef retroNav
             % ---------------------------------------------------------------------------------
             function amplitude = extractNavigator2Dms
                 
-                objNav.nav_amplitude = cell(objData.nr_coils);
+                objNav.navAmplitude = cell(objData.nr_coils);
                 
                 for coilcounter = 1:objData.nr_coils
                     
@@ -226,10 +226,10 @@ classdef retroNav
                     end
                     
                     % multiple with +1 or -1 depending on global switch
-                    amplitude = amplitude * objNav.up_down;
+                    amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude
-                    objNav.nav_amplitude{coilcounter} = amplitude;
+                    objNav.navAmplitude{coilcounter} = amplitude;
                     
                 end
                 
@@ -241,7 +241,7 @@ classdef retroNav
             % ---------------------------------------------------------------------------------
             function amplitude = extractNavigator3D
                 
-                objNav.nav_amplitude = cell(objData.nr_coils);
+                objNav.navAmplitude = cell(objData.nr_coils);
                 
                 for coilnr = 1:objData.nr_coils
                     
@@ -285,10 +285,10 @@ classdef retroNav
                     end
                     
                     % multiple with +1 or -1 depending on switch
-                    amplitude = amplitude * objNav.up_down;
+                    amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude
-                    objNav.nav_amplitude{coilnr} = amplitude;
+                    objNav.navAmplitude{coilnr} = amplitude;
                     
                 end
                 
@@ -301,7 +301,7 @@ classdef retroNav
             % ---------------------------------------------------------------------------------
             function extractNavigatorRadial
                 
-                objNav.nav_amplitude = cell(objData.nr_coils);
+                objNav.navAmplitude = cell(objData.nr_coils);
                 
                 for coilnr = 1:objData.nr_coils
                     
@@ -370,11 +370,11 @@ classdef retroNav
                     end
                     
                     % multiple with +1 or -1 depending on switch
-                    amplitude = amplitude * objNav.up_down;
+                    amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude
-                    objNav.nav_amplitude{coilnr} = amplitude;
-                    objNav.nav_phase{coilnr} = phase;
+                    objNav.navAmplitude{coilnr} = amplitude;
+                    objNav.navPhase{coilnr} = phase;
                     
                 end
                 
@@ -388,13 +388,13 @@ classdef retroNav
         % ---------------------------------------------------------------------------------
         % Determine the power-frequency spectrum of the navigator
         % ---------------------------------------------------------------------------------
-        function  objNav = determinePowerSpectrumPCA(objNav,objData)
+        function  objNav = determinePowerSpectrumPCA(objNav, objData)
             
             if objData.nr_coils > 1
                 
-                data = zeros([length(objNav.nav_amplitude{1}),objData.nr_coils]);
+                data = zeros([length(objNav.navAmplitude{1}),objData.nr_coils]);
                 for i = 1:objData.nr_coils
-                    data(:,i) = objNav.nav_amplitude{i};
+                    data(:,i) = objNav.navAmplitude{i};
                 end
                 
                 % take the principal component of the data
@@ -404,7 +404,7 @@ classdef retroNav
                 
             else
                 
-                amplitude = objNav.nav_amplitude{1}';
+                amplitude = objNav.navAmplitude{1}';
                 
             end
             
@@ -430,44 +430,44 @@ classdef retroNav
             
             % smooth the power spectrum with moving average
             power = movmean(power,3);
-            objNav.powerspectrum = power;
+            objNav.powerSpectrum = power;
             
             % detect heart rate
-            minheartbpm = objNav.physiofiltersettings(1);
-            maxheartbpm = objNav.physiofiltersettings(2);
+            minheartbpm = objNav.physioFilterSettings(1);
+            maxheartbpm = objNav.physioFilterSettings(2);
             minidx = round(minheartbpm*n/(fs*60));
             maxidx = round(maxheartbpm*n/(fs*60));
             [~, idx] = max(power(minidx:maxidx));
             objNav.detectedHR = round(idx*fs*60/n + minheartbpm);
             
             % detect respiratory rate
-            minRRbpm = objNav.physiofiltersettings(3);
-            maxRRbpm = objNav.physiofiltersettings(4);
+            minRRbpm = objNav.physioFilterSettings(3);
+            maxRRbpm = objNav.physioFilterSettings(4);
             minidx = round(minRRbpm*n/(fs*60));
             maxidx = round(maxRRbpm*n/(fs*60));
             [~, idx] = max(power(minidx:maxidx));
             objNav.detectedRR = round(idx*fs*60/n + minRRbpm);
             
-        end
+        end % determinePowerSpectrumPCA
         
         
         
         % ---------------------------------------------------------------------------------
         % Filter the navigator
         % ---------------------------------------------------------------------------------
-        function objNav = filterNavPCA(objNav,objData)
+        function objNav = filterNavPCA(objNav, objData)
             
             % applies a bandwidth filter on the navigator data
             
             sf = 1000/objData.TR;                   % sampling frequency in Hz = 1/TR[ms]
             resp_harmonics = 2;                     % number of higher order harmonics for respiratory frequency, 2 = main + 1 harmonic
-            order = objNav.physiofiltersettings(5); % butterworth filter order
+            order = objNav.physioFilterSettings(5); % butterworth filter order
             
             if objData.nr_coils > 1
                 
-                data = zeros([length(objNav.nav_amplitude{1}),objData.nr_coils]);
+                data = zeros([length(objNav.navAmplitude{1}),objData.nr_coils]);
                 for i = 1:objData.nr_coils
-                    data(:,i) = objNav.nav_amplitude{i};
+                    data(:,i) = objNav.navAmplitude{i};
                 end
                 
                 % take the principal component of the data
@@ -479,7 +479,7 @@ classdef retroNav
                 
             else
                 
-                amplitude = objNav.nav_amplitude{1}';
+                amplitude = objNav.navAmplitude{1}';
                 
             end
             
@@ -539,19 +539,20 @@ classdef retroNav
             % return the principal component, or in case 1 coil the orignal navigator data, and detrend
             objNav.PCANav = detrend(amplitude);
             
-        end
+        end % filterNavPCA
         
         
         
         % ---------------------------------------------------------------------------------
         % Heart filter shape for plotting
         % ---------------------------------------------------------------------------------
-        function output = filterShape(objNav,objData,order,type)
+        function output = filterShape(objNav, objData, app, type)
             
             % determines the filter shape for display purposes
             % order = order of the filter
             % type = 'heart' or 'resp'
             
+            order = app.FilterOrderEditField.Value;
             sf = 1000/objData.TR;           % sampling frequency in Hz = 1/TR[ms]
             
             if strcmp(type,'resp')
@@ -586,16 +587,16 @@ classdef retroNav
         % ---------------------------------------------------------------------------------
         % Determine the cardiac trigger points
         % ---------------------------------------------------------------------------------
-        function objNav = trigPointsHeart(objNav,objData)
+        function objNav = trigPointsHeart(objNav, objData)
             
             % extracts the ECG trigger points from the navigators
             
             % find the peaks and locations = fast
-            objNav.heartTrigPoints = retroNav.peakfinder(objNav.heartNav',[],[],[],false,true);
+            objNav.heartTrigPoints = retroNav.peakFinder(objNav.heartNav',[],[],[],false,true);
             
             % trigger points are in units of samples (actual time is thus heartTrigPoints*TR)
          
-            % backup plan in case peakfinder fails = slower
+            % backup plan in case peakFinder fails = slower
             if length(objNav.heartTrigPoints)<20
                 
                 % minimal distance 50% of expected heart rate [in points]
@@ -618,7 +619,7 @@ classdef retroNav
                 
             end
             
-        end
+        end % trigPointsHeart
         
         
         
@@ -630,11 +631,11 @@ classdef retroNav
             % extracts the ECG trigger points from the navigators
             
             % find the peaks and locations
-            objNav.respTrigPoints = retroNav.peakfinder(objNav.respNav',[],[],[],false,true);
+            objNav.respTrigPoints = retroNav.peakFinder(objNav.respNav',[],[],[],false,true);
             
             % trigger points are in units of samples (actual time is thus heartTrigPoints*TR)
             
-            % backup plan in case peakfinder fails
+            % backup plan in case peakFinder fails
             if length(objNav.respTrigPoints)<10
                 
                 interpolationfactor = objNav.splineFactor;
@@ -650,14 +651,14 @@ classdef retroNav
                 
             end
             
-        end
+        end % trigPointsResp
         
         
         
         % ---------------------------------------------------------------------------------
         % Determine average heart rate
         % ---------------------------------------------------------------------------------
-        function objNav = calcHeartRate(objNav,objData)
+        function objNav = calcHeartRate(objNav, objData)
             
             % determine heart rate as function of time in bpm
             
@@ -680,14 +681,14 @@ classdef retroNav
             objNav.heartRateTime = hr;
             objNav.heartRateTimeFiltered = hrf;
             
-        end
+        end % calcHeartRate
         
         
         
         % ---------------------------------------------------------------------------------
         % Determine average respiration rate
         % ---------------------------------------------------------------------------------
-        function objNav = calcRespRate(objNav,objData)
+        function objNav = calcRespRate(objNav, objData)
             
             % determine respiration rate as function of time in bpm
             
@@ -710,24 +711,20 @@ classdef retroNav
             objNav.respRateTime = resp;
             objNav.respRateTimeFiltered = respf;
             
-        end
+        end % calcRespRate
         
         
         
         % ---------------------------------------------------------------------------------
         % Determine respiration windows
         % ---------------------------------------------------------------------------------
-        function objNav = makeRespWindow(objNav,objData)
-            
-            %(rlocs,mean_resp,resp_percentage,tr,nr_klines)
+        function objNav = makeRespWindow(objNav, objData)
             
             rlocs = objNav.respTrigPoints;
             mean_resp = mean(objNav.respRateTimeFiltered);
             resp_percentage = objNav.respPercentage;
             tr = objData.TR;
             nr_klines = objData.nrKlines;
-            
-            % app.retroNavPars.respTrigPoints,mean(app.retroNavPars.respRateTimeFiltered),app.app.retroNavPars.respPercentage,app.retroPars.TR,app.nr_klines
             
             % this function creates an array (time line) of rectangular boxes of 0's and 1's around the detected respiratory signals
             % later on 1 means that there is a respiration, for which the k-lines will be discarded
@@ -747,11 +744,11 @@ classdef retroNav
             
             objNav.respWindow = window;
             
-        end
+        end % makeRespWindow
         
         
         
-    end
+    end % methods (public)
         
     
     
@@ -762,37 +759,13 @@ classdef retroNav
     
     methods (Static)
         
-        function varargout = peakfinder(x0, sel, thresh, extrema, includeEndpoints, interpolate)
-            %PEAKFINDER Noise tolerant fast peak finding algorithm
-            %   INPUTS:
-            %       x0 - A real vector from the maxima will be found (required)
-            %       sel - The amount above surrounding data for a peak to be,
-            %           identified (default = (max(x0)-min(x0))/4). Larger values mean
-            %           the algorithm is more selective in finding peaks.
-            %       thresh - A threshold value which peaks must be larger than to be
-            %           maxima or smaller than to be minima.
-            %       extrema - 1 if maxima are desired, -1 if minima are desired
-            %           (default = maxima, 1)
-            %       includeEndpoints - If true the endpoints will be included as
-            %           possible extrema otherwise they will not be included
-            %           (default = true)
-            %       interpolate - If true quadratic interpolation will be performed
-            %           around each extrema to estimate the magnitude and the
-            %           position of the peak in terms of fractional indicies. Note that
-            %           unlike the rest of this function interpolation assumes the
-            %           input is equally spaced. To recover the x_values of the input
-            %           rather than the fractional indicies you can do:
-            %           peakX = x0 + (peakLoc - 1) * dx
-            %           where x0 is the first x value and dx is the spacing of the
-            %           vector. Output peakMag to recover interpolated magnitudes.
-            %           See example 2 for more information.
-            %           (default = false)
-            %
-            %   OUTPUTS:
-            %       peakLoc - The indicies of the identified peaks in x0
-            %       peakMag - The magnitude of the identified peaks
+
+        % ---------------------------------------------------------------------------------
+        % peakFinder
+        % ---------------------------------------------------------------------------------
+    
+        function varargout = peakFinder(x0, sel, thresh, extrema, includeEndpoints, interpolate)
             
-            % Perform error checking and set defaults if not passed in
             narginchk(1, 6);
             nargoutchk(0, 2);
             
@@ -800,13 +773,11 @@ classdef retroNav
             flipData =  s(1) < s(2);
             len0 = numel(x0);
             if len0 ~= s(1) && len0 ~= s(2)
-                error('PEAKFINDER:Input','The input data must be a vector')
             elseif isempty(x0)
                 varargout = {[],[]};
                 return;
             end
             if ~isreal(x0)
-                warning('PEAKFINDER:NotReal','Absolute value of data will be used')
                 x0 = abs(x0);
             end
             
@@ -814,11 +785,7 @@ classdef retroNav
                 sel = (max(x0)-min(x0))/4;
             elseif ~isnumeric(sel) || ~isreal(sel)
                 sel = (max(x0)-min(x0))/4;
-                warning('PEAKFINDER:InvalidSel',...
-                    'The selectivity must be a real scalar.  A selectivity of %.4g will be used',sel)
             elseif numel(sel) > 1
-                warning('PEAKFINDER:InvalidSel',...
-                    'The selectivity must be a scalar.  The first selectivity value in the vector will be used.')
                 sel = sel(1);
             end
             
@@ -826,21 +793,14 @@ classdef retroNav
                 thresh = [];
             elseif ~isnumeric(thresh) || ~isreal(thresh)
                 thresh = [];
-                warning('PEAKFINDER:InvalidThreshold',...
-                    'The threshold must be a real scalar. No threshold will be used.')
             elseif numel(thresh) > 1
                 thresh = thresh(1);
-                warning('PEAKFINDER:InvalidThreshold',...
-                    'The threshold must be a scalar.  The first threshold value in the vector will be used.')
             end
             
             if nargin < 4 || isempty(extrema)
                 extrema = 1;
             else
                 extrema = sign(extrema(1)); % Should only be 1 or -1 but make sure
-                if extrema == 0
-                    error('PEAKFINDER:ZeroMaxima','Either 1 (for maxima) or -1 (for minima) must be input for extrema');
-                end
             end
             
             if nargin < 5 || isempty(includeEndpoints)
@@ -1016,20 +976,14 @@ classdef retroNav
             
             % Plot if no output desired
             if nargout == 0
-                if isempty(peakInds)
-                    disp('No significant peaks found')
-                else
-                    figure;
-                    plot(1:len0,x0,'.-',peakInds,peakMags,'ro','linewidth',2);
-                end
             else
                 varargout = {peakInds,peakMags};
             end
             
-        end % peakfinder
+        end % peakFinder
         
         
-    end
+    end % methods (static)
     
     
-end
+end % retroNav
