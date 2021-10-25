@@ -5,10 +5,10 @@ function folderName = retroExportDicomDcm(app,dcmdir,dcmExportDir,acqDur,recoTyp
 
 % Correct phase orientation for DCM export
 if app.retroDataPars.PHASE_ORIENTATION
-    movie = permute(rot90(permute(app.retroRecoPars.movie_exp,[2,3,4,1,5]),1),[4,1,2,3,5]);
+    movie = permute(rot90(permute(app.retroRecoPars.movieExp,[2,3,4,1,5]),1),[4,1,2,3,5]);
     movie = flip(movie,3);
 else
-    movie = app.retroRecoPars.movie_exp;
+    movie = app.retroRecoPars.movieExp;
 end
 
 % Data info
