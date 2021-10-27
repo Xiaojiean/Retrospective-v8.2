@@ -1242,9 +1242,11 @@ classdef retroData
 
             % For 3D data flip the 2nd and 3rd dimension
             if (size(kSpaceMRDdata,3)>1)
-                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[1,3,2,4,5,6,7]),2);
+                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[2,3,1,4,5,6,7]),3);
+            else
+                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[2,1,3,4,5,6,7]),2);
             end
-
+         
             % Convert to 1D array with alternating real and imag part of the data
             temp = kSpaceMRDdata;
             temp = temp(:);
