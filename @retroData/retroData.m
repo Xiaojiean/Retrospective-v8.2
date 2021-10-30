@@ -1217,6 +1217,10 @@ classdef retroData
 
             if (size(kSpaceMRDdata,3)>1)
                 kSpaceMRDdata = flip(permute(kSpaceMRDdata,[1,3,2,4,5,6,7]),2);
+            else
+                if obj.PHASE_ORIENTATION
+                    kSpaceMRDdata = flip(kSpaceMRDdata,1);
+                end
             end
 
             % Convert to 1D array with alternating real and imag part of the data
