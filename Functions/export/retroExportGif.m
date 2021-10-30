@@ -1,6 +1,9 @@
 function folder_name = retroExportGif(parameters,gifExportPath,movie,tag,window,level,recoType,acqDur)
 % Exports movie to animated gif
 
+if ~parameters.PHASE_ORIENTATION
+    movie = permute(rot90(permute(movie,[2,3,4,1,5]),1),[4,1,2,3,5]);
+end
 
 % Dimensions
 [nrFrames,~,~,nrSlices,nrDynamics] = size(movie);

@@ -44,7 +44,7 @@ classdef retroData
         TR
         ti = 1000
         VFA_angles
-        VFA_size = 0
+        VFA_size = 1
         frame_loop_on
         radial_on = 0
         slice_nav = 0
@@ -268,7 +268,6 @@ classdef retroData
                 
             end
             
-            
         end
         
         
@@ -374,6 +373,7 @@ classdef retroData
                 obj.dataType = '2Dradial';
                 if ndims(obj.data{1}) == 3
                     for i=1:obj.nr_coils
+                        %                                 NR Z Y X
                         obj.data{i} = permute(obj.data{i},[1,4,2,3]);
                     end
                 end
@@ -387,25 +387,31 @@ classdef retroData
                 
                 if obj.NO_VIEWS_2 > 1
                     
-                    obj.dataType = '3D';                                        % 3D data
+                    % 3D data
+                    obj.dataType = '3D';                                        
                     for i=1:obj.nr_coils
                         if obj.EXPERIMENT_ARRAY > 1
+                            %                                 NR Z Y X  
                             obj.data{i} = permute(obj.data{i},[1,3,2,4]);
                         else
+                            %                                 NR Z Y X 
                             obj.data{i} = permute(obj.data{i},[4,2,1,3]);
                         end
                     end
                     
                 else
-                    
-                    obj.dataType = '2D';                                        % 2D single-slice data
+
+                    % 2D single-slice data
+                    obj.dataType = '2D';  
                     if ndims(obj.data{1}) == 3
                         for i=1:obj.nr_coils
+                            %                                 NR Z Y X 
                             obj.data{i} = permute(obj.data{i},[1,4,2,3]);
                         end
                     end
                     
-                    if obj.NO_SLICES > 1                                        % 2D multi-slice data
+                    % 2D multi-slice data
+                    if obj.NO_SLICES > 1                                        
                         obj.dataType = '2Dms';
                         obj.multi2DFlag = true;
                     else
@@ -413,7 +419,7 @@ classdef retroData
                     end
                     
                 end
-                
+
                 obj.primary_navigator_point = obj.no_samples_nav;
                 if obj.nr_nav_points_used > obj.primary_navigator_point
                     obj.nr_nav_points_used = obj.primary_navigator_point;
@@ -763,10 +769,11 @@ classdef retroData
             parameters.PHASE_ORIENTATION = 1;
             pm1 = -1;
             pm2 = -1;
+
             if isfield(info2.pvm,'spackarrreadorient')
                 if strcmp(info2.pvm.spackarrreadorient,'L_R')
                     parameters.PHASE_ORIENTATION = 0;
-                    flr =  1;
+                    flr =  0;
                     pm1 = +1;
                     pm2 = -1;
                 end
@@ -915,7 +922,7 @@ classdef retroData
                     rawData{i} = squeeze(raw(i,:,:,:,:));
                     rawData{i} = reshape(rawData{i},parameters.EXPERIMENT_ARRAY,parameters.NO_SLICES,parameters.NO_VIEWS,parameters.NO_SAMPLES+34+parameters.no_samples_nav);
                 end
-
+     
             end
 
             % 3D data
@@ -980,10 +987,10 @@ classdef retroData
             end
 
             % read reco files to a structure
-            function struct = jcampread(filename)
+            function struct = jcampread(filename) %#ok<STOUT> 
 
                 % Open file read-only big-endian
-                [fid,message]=fopen(filename,'r','b');
+                fid = fopen(filename,'r','b');
                 skipline=0;
 
                 % Loop through separate lines
@@ -1080,9 +1087,7 @@ classdef retroData
                     end
                     % Close file
                     fclose(fid);
-                else
-                    disp(message)
-                    struct=-1;
+          
                 end
 
             end
@@ -1193,37 +1198,7 @@ classdef retroData
             kSpaceMRDdata = objKspace.kSpaceMrd;
             footer = obj.newMrdFooter;
 
-            % Get dimensions of the actual image data
-            if (size(kSpaceMRDdata,1)~=parameters.NoSamples)
-                return;
-            end
-            if (size(kSpaceMRDdata,2)>1)
-                if (size(kSpaceMRDdata,2)~=parameters.NoViews)
-                    return;
-                end
-            end
-            if (size(kSpaceMRDdata,3)>1)
-                if (size(kSpaceMRDdata,3)~=parameters.NoViews2)
-                    return;
-                end
-            end
-            if (size(kSpaceMRDdata,4)>1)
-                if (size(kSpaceMRDdata,4)~=parameters.NoSlices)
-                    return;
-                end
-            end
-            if (size(kSpaceMRDdata,5)>1)
-                if (size(kSpaceMRDdata,5)~=parameters.NoEchoes)
-                    return;
-                end
-            end
-            if (size(kSpaceMRDdata,6)>1)
-                if (size(kSpaceMRDdata,6)~=parameters.NoExperiments)
-                    return;
-                end
-            end
-
-            header1 = zeros(128,1); % 4x128=512 bytes
+            header1 = zeros(128,1); 
             header1(1)  = parameters.NoSamples;
             header1(2)  = parameters.NoViews;
             header1(3)  = parameters.NoViews2;
@@ -1240,13 +1215,10 @@ classdef retroData
             % Write 512 byte header
             fwrite(fid1,header1,'int32');
 
-            % For 3D data flip the 2nd and 3rd dimension
             if (size(kSpaceMRDdata,3)>1)
-                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[2,3,1,4,5,6,7]),3);
-            else
-                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[2,1,3,4,5,6,7]),2);
+                kSpaceMRDdata = flip(permute(kSpaceMRDdata,[1,3,2,4,5,6,7]),2);
             end
-         
+
             % Convert to 1D array with alternating real and imag part of the data
             temp = kSpaceMRDdata;
             temp = temp(:);

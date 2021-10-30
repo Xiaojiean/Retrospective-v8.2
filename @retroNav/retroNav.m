@@ -104,21 +104,21 @@ classdef retroNav
                 
                 objNav.navAmplitude = cell(objData.nr_coils);
                 
-                for coilnr = 1:objData.nr_coils
+                for coilNr = 1:objData.nr_coils
                     
                     % extracts the navigator data from the raw k-space data
                     % outputs a 1D array of doubles
                     
                     % size of the input data, 4th dimension is the readout direction which contains the navigator
-                    [nr_eperiments,dimz,dimy,dimx] = size(objData.data{coilnr});
+                    [nrEperiments,dimz,dimy,dimx] = size(objData.data{coilNr});
                     
                     % extract the navigator and put it in a long array
-                    navdata_amplitude = reshape(permute(objData.data{coilnr},[3,2,1,4]),nr_eperiments*dimy*dimz,dimx);
+                    navdataAmplitude = reshape(permute(objData.data{coilNr},[3,2,1,4]),nrEperiments*dimy*dimz,dimx);
                     
                     if objData.nr_nav_points_used > 1
                         
                         % take the principal component of the data
-                        data = navdata_amplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
+                        data = navdataAmplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
                         [coeff,~,~] = pca(data);
                         dataPCA = data*coeff;
                         
@@ -128,7 +128,7 @@ classdef retroNav
                     else
                         
                         % single nav point
-                        amplitude = abs(navdata_amplitude(:,objData.primary_navigator_point))';
+                        amplitude = abs(navdataAmplitude(:,objData.primary_navigator_point))';
                         
                     end
                     
@@ -136,12 +136,12 @@ classdef retroNav
                     amplitude(1,:) = detrend(amplitude(1,:));
                     
                     % make a guess whether the respiration peaks are positive or negative
-                    nr_elements = length(amplitude);
-                    first_element = round(0.4*nr_elements);
-                    last_element = round(0.8*nr_elements);
-                    max_amplitude = abs(max(detrend(amplitude(1,first_element:last_element))));
-                    min_amplitude = abs(min(detrend(amplitude(1,first_element:last_element))));
-                    if min_amplitude > max_amplitude
+                    nrElements = length(amplitude);
+                    firstElement = round(0.4*nrElements);
+                    lastElement = round(0.8*nrElements);
+                    maxAmplitude = abs(max(detrend(amplitude(1,firstElement:lastElement))));
+                    minAmplitude = abs(min(detrend(amplitude(1,firstElement:lastElement))));
+                    if minAmplitude > maxAmplitude
                         amplitude(1,:) = -amplitude(1,:);
                     end
                     
@@ -149,7 +149,7 @@ classdef retroNav
                     amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude array
-                    objNav.navAmplitude{coilnr} = amplitude;
+                    objNav.navAmplitude{coilNr} = amplitude;
                     
                 end
                 
@@ -165,22 +165,22 @@ classdef retroNav
                 
                 objNav.navAmplitude = cell(objData.nr_coils);
                 
-                for coilcounter = 1:objData.nr_coils
+                for coilNr = 1:objData.nr_coils
                     
                     % extracts the navigator data from the raw k-space data of multi-slice 2D data
                     % outputs a 1D array of doubles
                     
                     % size of the input data, 4th dimension is the readout direction which contains the navigator
-                    [nr_experiments,dimz,dimy,dimx] = size(objData.data{coilcounter});
+                    [nrExperiments,dimz,dimy,dimx] = size(objData.data{coilNr});
                     
                     % extract the navigator and put it in a long array
                     % y-dimension, repetitions, slice, readout
-                    navdata_amplitude = reshape(permute(objData.data{coilcounter},[3,1,2,4]),nr_experiments*dimy*dimz,dimx);
+                    navDataAmplitude = reshape(permute(objData.data{coilNr},[3,1,2,4]),nrExperiments*dimy*dimz,dimx);
                     
                     if objData.nr_nav_points_used > 1
                         
                         % Take the principal component of the data
-                        data = navdata_amplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
+                        data = navDataAmplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
                         [coeff,~,~] = pca(data);
                         dataPCA = data*coeff;
                         
@@ -190,7 +190,7 @@ classdef retroNav
                     else
                         
                         % single nav point
-                        amplitude = abs(navdata_amplitude(:,objData.primary_navigator_point))';
+                        amplitude = abs(navDataAmplitude(:,objData.primary_navigator_point))';
                         
                     end
                     
@@ -200,28 +200,28 @@ classdef retroNav
                     % make a guess whether the respiration peaks are positive or negative in the different slices
                     % this will not be needed with out-of-slice navigator
                     
-                    nr_elements = length(amplitude);
-                    nr_elementsperslice = round(nr_elements/dimz);
+                    nrElements = length(amplitude);
+                    nrElementsPerSlice = round(nrElements/dimz);
                     
                     for i = 1:dimz
                         
                         % First and last navigator point for each slice
-                        first_element = (i-1)*nr_elementsperslice + 1;
-                        last_element = i*nr_elementsperslice;
+                        firstElement0 = (i-1)*nrElementsPerSlice + 1;
+                        lastElement0 = i*nrElementsPerSlice;
                         
                         % Only look at part of that data away from the start to prevent transient effects
-                        first_element1 = (i-1)*nr_elementsperslice + 1 + round(0.4*nr_elementsperslice);
-                        last_element1 = i*nr_elementsperslice - round(0.1*nr_elementsperslice);
+                        firstElement1 = (i-1)*nrElementsPerSlice + 1 + round(0.4*nrElementsPerSlice);
+                        lastElement1 = i*nrElementsPerSlice - round(0.1*nrElementsPerSlice);
                         
                         % Min/max of navigator
-                        max_amplitude = abs(max(detrend(amplitude(1,first_element1:last_element1))));
-                        min_amplitude = abs(min(detrend(amplitude(1,first_element1:last_element1))));
+                        maxAmplitude = abs(max(detrend(amplitude(1,firstElement1:lastElement1))));
+                        minAmplitude = abs(min(detrend(amplitude(1,firstElement1:lastElement1))));
                         
-                        if min_amplitude > max_amplitude
-                            amplitude(1,first_element:last_element) = -amplitude(1,first_element:last_element);
+                        if minAmplitude > maxAmplitude
+                            amplitude(1,firstElement0:lastElement0) = -amplitude(1,firstElement0:lastElement0);
                         end
                         
-                        amplitude(1,first_element:last_element) = detrend(amplitude(1,first_element:last_element));
+                        amplitude(1,firstElement0:lastElement0) = detrend(amplitude(1,firstElement0:lastElement0));
                         
                     end
                     
@@ -229,12 +229,14 @@ classdef retroNav
                     amplitude = amplitude * objNav.upDown;
                     
                     % return the final nav amplitude
-                    objNav.navAmplitude{coilcounter} = amplitude;
+                    objNav.navAmplitude{coilNr} = amplitude;
                     
                 end
                 
             end % extractNavigator2Dms
             
+            
+
             
             % ---------------------------------------------------------------------------------
             % ----- 3D data -------------------------------------------------------------------
@@ -249,15 +251,15 @@ classdef retroNav
                     % outputs a 1D array of doubles
                     
                     % size of the input data, 4th dimension is the readout direction which contains the navigator
-                    [nr_rep,dimz,dimy,dimx] = size(objData.data{coilnr});
+                    [nrRepetitions,dimz,dimy,dimx] = size(objData.data{coilnr});
                     
                     % extract the navigator and put it in a long array
-                    navdata_amplitude = reshape(permute(objData.data{coilnr},[2,3,1,4]),nr_rep*dimy*dimz,dimx);
+                    navDataAmplitude = reshape(permute(objData.data{coilnr},[2,3,1,4]),nrRepetitions*dimy*dimz,dimx);
                     
                     if objData.nr_nav_points_used > 1
                         
                         % take the principal component of the data
-                        data = navdata_amplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
+                        data = navDataAmplitude(:,objData.primary_navigator_point-objData.nr_nav_points_used+1:objData.primary_navigator_point);
                         [coeff,~,~] = pca(data);
                         dataPCA = data*coeff;
                         
@@ -267,7 +269,7 @@ classdef retroNav
                     else
                         
                         % single nav point
-                        amplitude = abs(navdata_amplitude(:,objData.primary_navigator_point))';
+                        amplitude = abs(navDataAmplitude(:,objData.primary_navigator_point))';
                         
                     end
                     
@@ -275,12 +277,12 @@ classdef retroNav
                     amplitude(1,:) = detrend(amplitude(1,:));
                     
                     % make a guess whether the respiration peaks are positive or negative
-                    nr_elements = length(amplitude);
-                    first_element = round(0.4*nr_elements);
-                    last_element = round(0.6*nr_elements);
-                    max_amplitude = abs(max(amplitude(1,first_element:last_element)));
-                    min_amplitude = abs(min(amplitude(1,first_element:last_element)));
-                    if min_amplitude > max_amplitude
+                    nrElements = length(amplitude);
+                    firstElement = round(0.4*nrElements);
+                    lastElement = round(0.6*nrElements);
+                    maxAmplitude = abs(max(amplitude(1,firstElement:lastElement)));
+                    minAmplitude = abs(min(amplitude(1,firstElement:lastElement)));
+                    if minAmplitude > maxAmplitude
                         amplitude = -amplitude;
                     end
                     
@@ -309,12 +311,12 @@ classdef retroNav
                     % outputs a 1D array of doubles
                     
                     % size of the input data, 4th dimension is the readout direction which contains the navigator
-                    [nr_rep,dimz,dimy,dimx] = size(objData.data{coilnr});
+                    [nrRepetitions,dimz,dimy,dimx] = size(objData.data{coilnr});
                     
                     % determine the phase offset of the individual spokes based on the center navigator point
-                    phaseoffset = zeros(nr_rep*dimz*dimy,2);
+                    phaseoffset = zeros(nrRepetitions*dimz*dimy,2);
                     cnt1 = 1;
-                    for i = 1:nr_rep
+                    for i = 1:nrRepetitions
                         for j = 1:dimz
                             for k = 1:dimy
                                 phaseoffset(cnt1,:) = [k,angle(objData.data{coilnr}(i,j,k,objData.primary_navigator_point))];
@@ -333,14 +335,14 @@ classdef retroNav
                     %scatter(phaseoffset_x,phaseoffset_y)
                     
                     % extract the navigator and put it in a long array
-                    navdata_amplitude = reshape(permute(objData.data{coilnr},[3,2,1,4]),nr_rep*dimy*dimz,dimx);
+                    navDataAmplitude = reshape(permute(objData.data{coilnr},[3,2,1,4]),nrRepetitions*dimy*dimz,dimx);
                     
                     if objData.nr_nav_points_used > 1
                         
                         range = round(objData.nr_nav_points_used/2);
                         
                         % Take the principal component of the data
-                        data = navdata_amplitude(:,objData.primary_navigator_point-range:objData.primary_navigator_point+range);
+                        data = navDataAmplitude(:,objData.primary_navigator_point-range:objData.primary_navigator_point+range);
                         [coeff,~,~] = pca(data);
                         dataPCA = data*coeff;
                         
@@ -351,8 +353,8 @@ classdef retroNav
                     else
                         
                         % single nav point
-                        amplitude = abs(navdata_amplitude(:,objData.primary_navigator_point))';
-                        phase = angle(navdata_amplitude(:,objData.primary_navigator_point))';
+                        amplitude = abs(navDataAmplitude(:,objData.primary_navigator_point))';
+                        phase = angle(navDataAmplitude(:,objData.primary_navigator_point))';
                         
                     end
                     
@@ -360,12 +362,12 @@ classdef retroNav
                     amplitude(1,:) = detrend(amplitude(1,:));
                     
                     % Make a guess whether the respiration peaks are positive or negative
-                    nr_elements = length(amplitude);
-                    first_element = round(0.4*nr_elements);
-                    last_element = round(0.6*nr_elements);
-                    max_amplitude = abs(max(amplitude(1,first_element:last_element)));
-                    min_amplitude = abs(min(amplitude(1,first_element:last_element)));
-                    if min_amplitude > max_amplitude
+                    nrElements = length(amplitude);
+                    firstElement = round(0.4*nrElements);
+                    lastElement = round(0.6*nrElements);
+                    maxAmplitude = abs(max(amplitude(1,firstElement:lastElement)));
+                    minAmplitude = abs(min(amplitude(1,firstElement:lastElement)));
+                    if minAmplitude > maxAmplitude
                         amplitude = -amplitude;
                     end
                     
@@ -379,7 +381,6 @@ classdef retroNav
                 end
                 
             end % extractNavigatorRadial
-            
             
         end % extractNavigator
        

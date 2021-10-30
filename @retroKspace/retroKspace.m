@@ -759,8 +759,7 @@ classdef retroKspace
                 objKspace.kSpaceAvg = new_averages;
                 
             end
-            
-            
+
         end
         
         
@@ -1164,14 +1163,16 @@ classdef retroKspace
             
             [s1,s2,s3,s4,s5,s6] = size(objKspace.kSpaceAvg);
             s = max([s1,s2]);
-            nr_coils = length(objKspace.kSpace);
-            for i = 1:nr_coils
+            nrCoils = length(objKspace.kSpace);
+            for i = 1:nrCoils
                 objKspace.kSpace{i} = reshape(objKspace.kSpace{i},[s,s3,s4,s5,s6]);
-                objKspace.kSpace{i} = permute(objKspace.kSpace{i},[1,3,4,2,5,6]);
+                objKspace.kSpace{i} = permute(objKspace.kSpace{i},[1,4,3,2,5,6]);
             end
             objKspace.kSpaceAvg = reshape(objKspace.kSpaceAvg,[s,s3,s4,s5,s6]);
-            objKspace.kSpaceAvg = permute(objKspace.kSpaceAvg,[1,3,4,2,5,6]);
+            objKspace.kSpaceAvg = permute(objKspace.kSpaceAvg,[1,4,3,2,5,6]);
             
+            % kSpace = frames, X, Y, Z, dynamics
+
         end
         
 

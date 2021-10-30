@@ -3,12 +3,10 @@
 % ---------------------------------------------------------------
 function folderName = retroExportDicomMat(app,dcmExportDir,acqDur,tag,recoType)
 
-% Correct phase orientation for DCM export
-if app.retroDataPars.PHASE_ORIENTATION
-    movie = permute(rot90(permute(app.retroRecoPars.movieExp,[2,3,4,1,5]),1),[4,1,2,3,5]);
-    movie = flip(movie,3);
-else
-    movie = app.retroRecoPars.movieExp;
+movie = app.retroRecoPars.movieExp;
+      
+if ~app.retroDataPars.PHASE_ORIENTATION
+    movie = permute(rot90(permute(movie,[2,3,4,1,5]),1),[4,1,2,3,5]);
 end
 
 % Data info
@@ -48,10 +46,12 @@ for frame = 1:nrFrames
             fn = ['0000',num2str(cnt)];
             fn = fn(size(fn,2)-4:size(fn,2));
             fname = [folderName,filesep,fn,'_frame_',num2str(frame),'_slice_',num2str(slice),dynamicLabel,num2str(dyn),'.dcm'];
-            
+  
             dcmHeader = generate_dicomheader_mat;
 
-            dicomwrite(squeeze(cast(round(movie(frame,:,:,slice,dyn)),'uint16')), fname, dcmHeader);
+            im = squeeze(cast(round(movie(frame,:,:,slice,dyn)),'uint16'));
+      
+            dicomwrite(im, fname, dcmHeader);
 
             cnt = cnt + 1;
 
