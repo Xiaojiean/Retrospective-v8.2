@@ -512,7 +512,7 @@ classdef retroNav
                 else
                     for i = 1:resp_harmonics
                         [b, a] = butter(order,[i*rrf-0.5*bwr,i*rrf+0.5*bwr]/(sf/2),'bandpass');       % butterworth bandpass filter
-                        resp_outputdata = resp_outputdata + (1/i^2)*filtfilt(b,a,amplitude);          % apply zero-phase shift filtering
+                        resp_outputdata = resp_outputdata + (1/i^2.75)*filtfilt(b,a,amplitude);          % apply zero-phase shift filtering
                     end
                 end
                 
