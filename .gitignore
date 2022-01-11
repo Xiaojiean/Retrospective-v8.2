@@ -1,7 +1,6 @@
 .DS_Store
-Retrospective/
-Retrospective_resources/
-Retrospective.prj
-Standalone installers/
 .gitignore
 .gitattributes
+Retrospective.prj
+Retrospective/
+Retrospective_resources/
