@@ -891,8 +891,18 @@ classdef retroData
             % 2D data
             if strcmp(info2.pvm.spatdimenum,"2D") || strcmp(info2.pvm.spatdimenum,"<2D>")
 
+                % TESTING
+                if isfield(info2.pvm,'ppggradamparray1')
+                    parameters.NO_VIEWS = length(info2.pvm.ppggradamparray1);
+                    disp(parameters.NO_VIEWS)
+                end
+
                 % Imaging k-space
-                kspace = reshape(kspace,parameters.NO_SLICES,parameters.NO_SAMPLES,parameters.nr_coils,parameters.NO_VIEWS,[]);
+                singleRep = parameters.NO_SLICES*parameters.NO_SAMPLES*parameters.nr_coils*parameters.NO_VIEWS;
+                parameters.EXPERIMENT_ARRAY = floor(length(kspace)/singleRep);
+                kspace = kspace(1:singleRep*parameters.EXPERIMENT_ARRAY,:);
+                kspace = reshape(kspace,parameters.NO_SLICES,parameters.NO_SAMPLES,parameters.nr_coils,parameters.NO_VIEWS,parameters.EXPERIMENT_ARRAY);
+                
                 parameters.EXPERIMENT_ARRAY = size(kspace,5);
                 kspace = permute(kspace,[3,5,1,4,2]); % nc, nr, ns, np, nf
 
@@ -909,6 +919,7 @@ classdef retroData
                 end
 
                 % Navigator
+                navkspace = navkspace(1:parameters.NO_SLICES*parameters.no_samples_nav*parameters.nr_coils*parameters.NO_VIEWS*parameters.EXPERIMENT_ARRAY);
                 navkspace = reshape(navkspace,parameters.NO_SLICES,parameters.no_samples_nav,parameters.nr_coils,parameters.NO_VIEWS,parameters.EXPERIMENT_ARRAY);
                 navkspace = permute(navkspace,[3,5,1,4,2]);
 
@@ -985,6 +996,7 @@ classdef retroData
                 end
 
             end
+
 
             % read reco files to a structure
             function struct = jcampread(filename) %#ok<STOUT> 

@@ -83,30 +83,66 @@ if strcmp(recoType,'realtime')
 
 else
 
-    % Frames movie
+    % Frames or dynamics movie
 
-    delayTime = 1/nrFrames;
+    if nrFrames > nrDynamics
 
-    for i = 1:nrSlices
+        delayTime = 1/nrFrames;
 
-        slice = ['0',num2str(i)];
-        slice = slice(end-1:end);
+        for i = 1:nrSlices
 
-        for j = 1:nrDynamics
+            slice = ['0',num2str(i)];
+            slice = slice(end-1:end);
 
-            dyn = ['00',num2str(j)];
-            dyn = dyn(end-2:end);
+            for j = 1:nrDynamics
+
+                dyn = ['00',num2str(j)];
+                dyn = dyn(end-2:end);
+
+                for idx = 1:nrFrames
+
+                    imaget = uint8(squeeze(movie(idx,:,:,i,j)));
+                    image(i,:,:,idx,j) = imresize(imaget,[dimx,dimy]); %#ok<AGROW>
+                    imagegif = squeeze(image(i,:,:,idx,j));
+
+                    if idx == 1
+                        imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,dynamiclabel,dyn,'.gif'],'DelayTime',delayTime,'LoopCount',inf);
+                    else
+                        imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,dynamiclabel,dyn,'.gif'],'WriteMode','append','DelayTime',delayTime);
+                    end
+
+                end
+
+            end
+
+        end
+
+    else
+
+        delayTime = 1/nrDynamics;
+
+        for i = 1:nrSlices
+
+            slice = ['0',num2str(i)];
+            slice = slice(end-1:end);
 
             for idx = 1:nrFrames
 
-                imaget = uint8(squeeze(movie(idx,:,:,i,j)));
-                image(i,:,:,idx,j) = imresize(imaget,[dimx,dimy]); %#ok<AGROW> 
-                imagegif = squeeze(image(i,:,:,idx,j));
+                frm = ['00',num2str(idx)];
+                frm = frm(end-2:end);
 
-                if idx == 1
-                    imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,dynamiclabel,dyn,'.gif'],'DelayTime',delayTime,'LoopCount',inf);
-                else
-                    imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,dynamiclabel,dyn,'.gif'],'WriteMode','append','DelayTime',delayTime);
+                for j = 1:nrDynamics
+
+                    imaget = uint8(squeeze(movie(idx,:,:,i,j)));
+                    image(i,:,:,idx,j) = imresize(imaget,[dimx,dimy]); %#ok<AGROW>
+                    imagegif = squeeze(image(i,:,:,idx,j));
+
+                    if j == 1
+                        imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,'_frame_',frm,'.gif'],'DelayTime',delayTime,'LoopCount',inf);
+                    else
+                        imwrite(imagegif,[folder_name,filesep,'movie_',tag,'_slice_',slice,'_frame_',frm,'.gif'],'WriteMode','append','DelayTime',delayTime);
+                    end
+
                 end
 
             end
@@ -166,7 +202,7 @@ end
             d = d*(f.^(0:1:sum(pf == f)));
             d = d(:);
         end
-        d = sort(d)';  
+        d = sort(d)';
 
     end
 
