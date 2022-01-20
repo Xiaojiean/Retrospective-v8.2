@@ -675,7 +675,11 @@ classdef retroNav
             
             % determine the mean cardiac rate
             includedata = objData.includeWindow.*objData.excludeWindow;                     % data-window which is included
-            includedata = round(resample(includedata,3*length(hr),length(includedata)));    % resample the data-window to nr samples heartrate
+            try
+                includedata = round(resample(includedata,2*length(hr),length(includedata)));    
+            catch
+                includedata = round(resample(includedata,3*length(hr),length(includedata)));    % resample the data-window to nr samples heartrate
+            end
             includedata = round(resample(includedata,length(hr),length(includedata)));      % in 2 steps, to prevent an overflow error
             
             objNav.meanHeartRate = round(median(nonzeros(includedata.*hr)));                % take the median of the heartrate
@@ -705,9 +709,13 @@ classdef retroNav
             
             % determine the mean respiration rate
             includedata = objData.includeWindow.*objData.excludeWindow;                     % data-window which is included
-            includedata = round(resample(includedata,3*length(resp),length(includedata)));  % resample the data-window to nr samples respiration rate
+            try
+                includedata = round(resample(includedata,2*length(resp),length(includedata)));  % resample the data-window to nr samples respiration rate
+            catch
+                includedata = round(resample(includedata,3*length(resp),length(includedata)));  % resample the data-window to nr samples respiration rate
+            end
             includedata = round(resample(includedata,length(resp),length(includedata)));    % in 2 steps, to prevent an overflow error
-            
+
             objNav.meanRespRate = round(median(nonzeros(includedata.*resp)));               % take the median of the respirationrate
             objNav.respRateTime = resp;
             objNav.respRateTimeFiltered = respf;
@@ -972,7 +980,7 @@ classdef retroNav
             % Change sign of data if was finding minima
             if extrema < 0
                 peakMags = -peakMags;
-                x0 = -x0;
+                x0 = -x0; %#ok<NASGU> 
             end
             
             % Plot if no output desired

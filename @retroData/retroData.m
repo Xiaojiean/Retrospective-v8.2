@@ -891,10 +891,9 @@ classdef retroData
             % 2D data
             if strcmp(info2.pvm.spatdimenum,"2D") || strcmp(info2.pvm.spatdimenum,"<2D>")
 
-                % TESTING
+                % In case k-space trajectory was hacked by macro
                 if isfield(info2.pvm,'ppggradamparray1')
                     parameters.NO_VIEWS = length(info2.pvm.ppggradamparray1);
-                    disp(parameters.NO_VIEWS)
                 end
 
                 % Imaging k-space
