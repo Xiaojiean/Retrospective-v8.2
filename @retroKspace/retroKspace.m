@@ -230,23 +230,23 @@ classdef retroKspace
             %
             
             card_assignments = zeros(nr_klines,1);                      % zero = no assignment (breathing, begin/end of data)
-            parfor i=startpoint:endpoint                                % start search to which heartbeat the measurement belongs
+            for i=startpoint:endpoint                                % start search to which heartbeat the measurement belongs
   
                 j=loc_maxj_card;
-                while i<bin_times_card(j) || j==1 %#ok<*PFBNS> 
+                while j>1 && i<bin_times_card(j)  %#ok<*PFBNS> 
                     j=j-1;
                 end
-                
+
                 card_assignments(i) = mod(j-1,nr_card_frames)+1;        % assign to bin frame number = j modulus nr_frames
                 if nr_resp_frames==1 && resp_window(i)==1               % if measurement is during respiration and only 1 resp state, put back to 0 to discard this k-line
                         card_assignments(i) = 0;
                 end
             end
-            
+
             resp_assignments = zeros(nr_klines,1);                      % zero = no assignment (breathing, begin/end of data)
             parfor i=startpoint:endpoint                                % start search to which respiration the measurement belongs
                 j=loc_maxj_resp;
-                while i<bin_times_resp(j) || j==1
+                while j>1 && i<bin_times_resp(j)
                     j=j-1;
                 end
                 resp_assignments(i) = mod(j-1,nr_resp_frames)+1;        % assign to bin frame number = j modulus nr_frames
@@ -306,7 +306,7 @@ classdef retroKspace
             parfor i=startpoint:endpoint                                    % start search to which heartbeat the measurement belongs
                 j=loc_maxj_card;
                 
-                while i < bin_times_card(j,1) || j==1
+                while j>1 && i<bin_times_card(j,1)
                     j=j-1;
                 end
                 
@@ -323,7 +323,7 @@ classdef retroKspace
             resp_assignments = zeros(nr_klines,1);                          % zero = no assignment (breathing, begin/end of data)
             parfor i=startpoint:endpoint                                    % start search to which respiration the measurement belongs
                 j=loc_maxj_resp;
-                while i<bin_times_resp(j) || j==1
+                while j>1 && i<bin_times_resp(j)
                     j=j-1;
                 end
                 resp_assignments(i) = mod(j-1,nr_resp_frames)+1;            % assign to bin frame number = j modulus nr_frames
