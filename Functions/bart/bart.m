@@ -152,7 +152,7 @@ if ismac
     end
 
     if ERR~=0
-        app.TextMessage('Error in Bart ...');
+        error('command exited with an error');
     end
 
 end

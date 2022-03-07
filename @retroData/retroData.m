@@ -43,7 +43,7 @@ classdef retroData
         tr_extra_us = 0
         TR
         ti = 1000
-        VFA_angles
+        VFA_angles = []
         VFA_size = 1
         frame_loop_on
         radial_on = 0
@@ -220,6 +220,9 @@ classdef retroData
                 
                 if isfield(parameter,'VFA_size')
                     obj.VFA_size = parameter.VFA_size;
+                    if obj.VFA_size == 0 
+                        obj.VFA_size = 1;
+                    end
                 end
                 
                 if isfield(parameter,'frame_loop_on')
