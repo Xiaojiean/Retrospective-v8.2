@@ -318,6 +318,19 @@ classdef retroData
             
         end
         
+
+
+        % ---------------------------------------------------------------------------------
+        % Check for TR > 0
+        % ---------------------------------------------------------------------------------
+        function obj = checkTR(obj, app)
+            
+            if obj.tr == 0
+                obj.validDataFlag = false;
+                app.TextMessage('ERROR: TR = 0 is not allowed ...');
+            end
+            
+        end
         
         
 
